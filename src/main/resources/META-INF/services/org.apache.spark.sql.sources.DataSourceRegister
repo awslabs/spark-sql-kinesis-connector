@@ -1,0 +1,1 @@
+org.apache.spark.sql.connector.kinesis.KinesisV2TableProvider
