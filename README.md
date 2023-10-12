@@ -10,8 +10,8 @@ Clone SparkSqlKinesisConnector from the source repository on GitHub.
 
 ```sh
 git clone https://github.com/awslabs/spark-sql-kinesis-connector.git
-git checkout master
-cd SparkSqlKinesisConnector
+cd spark-sql-kinesis-connector
+
 mvn clean install -DskipTests
 ```
 
