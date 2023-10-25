@@ -15,7 +15,7 @@ cd spark-sql-kinesis-connector
 mvn clean install -DskipTests
 ```
 
-This will create *target/spark-streaming-sql-kinesis-connector_2.12-<kineisis-connector-version>-SNAPSHOT.jar* file which contains the connector and its shaded dependencies. The jar file will also be installed to local maven repository.
+This will create `target/spark-streaming-sql-kinesis-connector_2.12-<kineisis-connector-version>-SNAPSHOT.jar` file which contains the connector and its shaded dependencies. The jar file will also be installed to local maven repository.
 
 
 
@@ -25,13 +25,22 @@ After the jar file is installed in local Maven repository, configure your projec
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-streaming-sql-kinesis-connector_2.12</artifactId>
-            <version>${kineisis-connector-version}</version>
+            <version>${kinesis-connector-version}</version>
         </dependency>
 ```
 
 
 
 Current version is tested with Spark 3.2 and above.
+
+### Public jar file
+
+For easier access, there is a public jar file available at S3.  For example, for version 1.0.0, the file path to jar file is `s3://awslabs-code-us-east-1/spark-sql-kinesis-connector/spark-streaming-sql-kinesis-connector_2.12-1.0.0.jar`.
+
+To run with `spark-submit`,  include the jar file as below (version 1.0.0 as an example)
+```
+--jars s3://awslabs-code-us-east-1/spark-sql-kinesis-connector/spark-streaming-sql-kinesis-connector_2.12-1.0.0.jar
+```
 
 ## How to use it
 
