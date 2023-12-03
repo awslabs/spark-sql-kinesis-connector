@@ -194,9 +194,11 @@ kinesis
   .groupBy("data").count()
   .writeStream
   .format("aws-kinesis")
-  .outputMode("append") 
-  .option("streamName", "sparkSinkTest")
-  .option("endpointUrl", "https://kinesis.us-east-1.amazonaws.com")
+  .outputMode("append")
+  .option("kinesis.region", "us-east-1")
+  .option("kinesis.streamName", "sparkSinkTest")
+  .option("kinesis.endpointUrl", "https://kinesis.us-east-1.amazonaws.com")
+  .option("checkpointLocation", "/path/to/checkpoint")
   .start()
 ```
 
