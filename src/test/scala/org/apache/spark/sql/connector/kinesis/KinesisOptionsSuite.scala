@@ -215,6 +215,16 @@ class KinesisOptionsSuite extends KinesisTestBase {
     options.stsRoleArn.get shouldBe "assumeRoleTest"
     options.stsSessionName.get shouldBe "sessionNameTest"
   }
+
+  test("sink option uses names as published in README") {
+    ENDPOINT_URL shouldBe "kinesis.endpointUrl"
+    REGION shouldBe "kinesis.region"
+    STREAM_NAME shouldBe "kinesis.streamName"
+    SINK_FLUSH_WAIT_TIME_MILLIS shouldBe "kinesis.sink.flushWaitTimeMs"
+    SINK_RECORD_MAX_BUFFERED_TIME shouldBe "kinesis.sink.recordMaxBufferedTimeMs"
+    SINK_MAX_CONNECTIONS shouldBe "kinesis.sink.maxConnections"
+    SINK_AGGREGATION_ENABLED shouldBe "kinesis.sink.aggregationEnabled"
+  }
 }
 
 object KinesisOptionsSuite {
