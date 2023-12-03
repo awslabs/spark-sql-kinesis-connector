@@ -151,9 +151,9 @@ object KinesisOptions {
   
   // Sink options
   val SINK_FLUSH_WAIT_TIME_MILLIS: String = SINK_PREFIX + "flushWaitTimeMs"
-  val SINK_RECORD_MAX_BUFFERED_TIME: String = SINK_PREFIX + ".recordMaxBufferedTimeMs"
-  val SINK_MAX_CONNECTIONS: String = SINK_PREFIX + ".maxConnections"
-  val SINK_AGGREGATION_ENABLED: String = SINK_PREFIX + ".aggregationEnabled"
+  val SINK_RECORD_MAX_BUFFERED_TIME: String = SINK_PREFIX + "recordMaxBufferedTimeMs"
+  val SINK_MAX_CONNECTIONS: String = SINK_PREFIX + "maxConnections"
+  val SINK_AGGREGATION_ENABLED: String = SINK_PREFIX + "aggregationEnabled"
 
   val DEFAULT_SINK_FLUSH_WAIT_TIME_MILLIS: String = "100"
   val DEFAULT_SINK_RECORD_MAX_BUFFERED_TIME: String = "1000"
