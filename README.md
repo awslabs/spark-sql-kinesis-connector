@@ -183,6 +183,7 @@ def waitForQueryStop(query: StreamingQuery, path: String): Unit = {
 }
 ```
 
+Note: Even gracefully shutdown is implemented, there is no guarantee of consumer deregistration success, especially in the event that an application is terminated brutally.
 
 
 ##### Using the Kinesis Sink
@@ -249,7 +250,7 @@ To use DynamoDB, following policy definition should be added to the IAM role run
 
 The Spark application need to provide a `kinesis.consumerName` when it is using Kinesis Enhanced Fan Out. **Each application must have a unique stream consumer name.** Kinesis Connector registers the stream consumer automatically when the application starts.  If a consumer with the same `kinesis.consumerName` already exists, the connector reuses it. 
 
-The Stream consumer is deregistered when the application is **shutdown gracefully** with query `stop()` called. There is no garuantee of deregistration success, especially in the event that an application is terminated brutally. The stream consumer will be reused when the application restarts. Note that The stream consumers remain registrated may **incur extra AWS costs**.
+The Stream consumer is deregistered when the application is **shutdown gracefully** with query `stop()` called. There is no guarantee of deregistration success, especially in the event that an application is terminated brutally. The stream consumer will be reused when the application restarts. Note that The stream consumers remain registrated may **incur extra AWS costs**.
 
 
 
