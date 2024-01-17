@@ -17,8 +17,6 @@ mvn clean install -DskipTests
 
 This will create `target/spark-streaming-sql-kinesis-connector_2.12-<kineisis-connector-version>-SNAPSHOT.jar` file which contains the connector and its shaded dependencies. The jar file will also be installed to local maven repository.
 
-
-
 After the jar file is installed in local Maven repository, configure your project pom.xml (use Maven as an example):
 
 ```xml
@@ -41,6 +39,9 @@ To run with `spark-submit`,  include the jar file as below (version 1.0.0 as an 
 ```
 --jars s3://awslabs-code-us-east-1/spark-sql-kinesis-connector/spark-streaming-sql-kinesis-connector_2.12-1.0.0.jar
 ```
+The jar file can also be downloaded at `https://awslabs-code-us-east-1.s3.amazonaws.com/spark-sql-kinesis-connector/spark-streaming-sql-kinesis-connector_2.12-1.0.0.jar`
+
+Change the jar file name based on version, e.g. version 1.1.0 is spark-streaming-sql-kinesis-connector_2.12-1.1.0.jar
 
 ## How to use it
 
@@ -318,7 +319,7 @@ Refer to [AWS SDK for Java 2.x developer Guide](https://docs.aws.amazon.com/sdk-
 
 
 
-### Cross Account Access
+### Cross Account Access using AssumeRole
 
 There are scenarios where customers follow a multi-account approach resulting in Kinesis Data Streams and Spark consumer applications operating in different accounts. 
 
@@ -397,7 +398,15 @@ add below permission
   .option("kinesis.stsSessionName", "StsSessionName")
 ```
 
+### Cross Account Access using Access Key
 
+It's also possible to access cross account Kinesis data stream using user's AWS credentials. The user is in Kinesis account (Account A) and needs to have access permission to Kinesis as above.
+
+```scala
+  .option("kinesis.awsAccessKeyId", "awsAccessKeyId")
+  .option("kinesis.awsSecretKey", "awsSecretKey")
+```
+Note: Using permanent credentials are not recommended due to security concerns.
 
 ## Kinesis Source Configuration
 
@@ -425,6 +434,8 @@ add below permission
 | kinesis.stsRoleArn                         | -                                                            | AWS STS Role ARN for Kinesis operations describe, read record, etc. |
 | kinesis.stsSessionName                     | -                                                            | AWS STS Session name                                         |
 | kinesis.stsEndpointUrl                     | -                                                            | AWS STS Endpoint URL                                         |
+| kinesis.awsAccessKeyId                     | -                                                            | awsAccessKeyId for Kinesis operations describe, read record, etc.                                        |
+| kinesis.awsSecretKey                     | -                                                            | awsSecretKey for Kinesis operations describe, read record, etc.                                        |
 | kinesis.kinesisRegion                      | inferred value from `kinesis.endpointUrl`                    | Region the Kinesis stream belongs to                         |
 | kinesis.dynamodb.tableName                 | Required when when  `kinesis.metadataCommitterType` is "DYNAMODB" | Dynamodb tableName                                           |
 | kinesis.subscribeToShard.timeoutSec        | 60 (seconds)                                                 | Timeout waiting for subscribeToShard finish                  |
@@ -451,8 +462,6 @@ add below permission
 ## Security
 
 See [CONTRIBUTING](*CONTRIBUTING.md#security-issue-notifications*) for more information.
-
-
 
 ## Acknowledgement
 

@@ -62,6 +62,9 @@ class KinesisOptionsSuite extends KinesisTestBase {
     options.stsRoleArn shouldBe None
     options.stsSessionName shouldBe None
     options.stsEndpointUrl shouldBe None
+    options.awsAccessKeyId shouldBe None
+    options.awsSecretKey shouldBe None
+    options.sessionToken shouldBe None
     options.kinesisRegion shouldBe TESTBASE_DEFAULT_REGION
   }
 
@@ -100,6 +103,9 @@ class KinesisOptionsSuite extends KinesisTestBase {
     options.stsRoleArn shouldBe None
     options.stsSessionName shouldBe None
     options.stsEndpointUrl shouldBe None
+    options.awsAccessKeyId shouldBe None
+    options.awsSecretKey shouldBe None
+    options.sessionToken shouldBe None
     options.kinesisRegion shouldBe TESTBASE_DEFAULT_REGION
   }
   
@@ -114,6 +120,9 @@ class KinesisOptionsSuite extends KinesisTestBase {
     val testStsRoleArn = "nameTestStsRoleArn"
     val testStsSessionName = "nameTestStsSessionName"
     val testStsEndpointUrl = "nameTestStsEndpointUrl"
+    val testAwsAccessKeyId = "nameTestAwsAccessKeyId"
+    val testAwsSecretKey = "nameTestAwsSecretKey"
+    val testSessionToken = "nameTestSessionTokenn"
     val testDynamoDBTableName = "nameTestDynamoDBTableName"
 
     val params = Map(
@@ -139,6 +148,9 @@ class KinesisOptionsSuite extends KinesisTestBase {
       "kinesis.stsRoleArn" -> testStsRoleArn,
       "kinesis.stsSessionName" -> testStsSessionName,
       "kinesis.stsEndpointUrl" -> testStsEndpointUrl,
+      "kinesis.awsAccessKeyId" -> testAwsAccessKeyId,
+      "kinesis.awsSecretKey" -> testAwsSecretKey,
+      "kinesis.sessionToken" -> testSessionToken,
       "kinesis.kinesisRegion" -> testKafkaRegion,
       "kinesis.dynamodb.tableName" -> testDynamoDBTableName,
       "kinesis.subscribeToShard.timeoutSec" -> "10",
@@ -170,12 +182,29 @@ class KinesisOptionsSuite extends KinesisTestBase {
     options.stsRoleArn shouldBe Some(testStsRoleArn)
     options.stsSessionName shouldBe Some(testStsSessionName)
     options.stsEndpointUrl shouldBe Some(testStsEndpointUrl)
+    options.awsAccessKeyId shouldBe Some(testAwsAccessKeyId)
+    options.awsSecretKey shouldBe Some(testAwsSecretKey)
+    options.sessionToken shouldBe Some(testSessionToken)
     options.kinesisRegion shouldBe testKafkaRegion
     options.dynamodbTableName shouldBe testDynamoDBTableName
     options.efoSubscribeToShardTimeout shouldBe Duration.ofSeconds(10)
     options.efoSubscribeToShardMaxRetries shouldBe 3
     options.pollingNumberOfRecordsPerFetch shouldBe 500
     options.pollingFetchIntervalMs shouldBe 50
+  }
+
+  test ("awsAccessKeyId and awsSecretKey must be both define or none") {
+
+    val params = collection.mutable.Map(defaultPollingOptionMap.toSeq: _*) + (AWS_ACCESS_KEY_ID -> "testAccessKeyId")
+    intercept[IllegalArgumentException] {
+      KinesisOptions(new CaseInsensitiveStringMap(params.asJava))
+    }
+    
+    params +=(AWS_SECRET_KEY -> "testSecretKey")
+
+    val options = KinesisOptions(new CaseInsensitiveStringMap(params.asJava))
+    options.awsAccessKeyId.get shouldBe "testAccessKeyId"
+    options.awsSecretKey.get shouldBe "testSecretKey"
   }
   
   test("DESCRIBE_SHARD_INTERVAL must be >=0") {

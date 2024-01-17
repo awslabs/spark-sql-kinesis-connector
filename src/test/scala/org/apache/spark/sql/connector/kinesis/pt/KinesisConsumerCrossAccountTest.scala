@@ -42,10 +42,11 @@ object KinesisConsumerCrossAccountTest {
     val checkpointDir = args(4)
     val writeToDir = args(5)
     val regionName = args(6)
-    val stsRoleArn = args(7)
-    val stsSessionName = args(8)
+    val crossAccountParam1 = args(7)
+    val crossAccountParam2 = args(8)
     val endpointUrl = args(9)
     val committerType = if (args.length>10) args(10) else ""
+    val crossAccountType = if (args.length>10) args(11) else ""
 
     val sparkBuilder = SparkSession.builder()
       .appName("KinesisConsumerCrossAccountTest")
@@ -64,8 +65,18 @@ object KinesisConsumerCrossAccountTest {
       .option(KinesisOptions.ENDPOINT_URL, endpointUrl)
       .option(KinesisOptions.CONSUMER_TYPE, consumerType)
       .option(KinesisOptions.STARTING_POSITION, startPosition)
-      .option(KinesisOptions.STS_ROLE_ARN, stsRoleArn)
-      .option(KinesisOptions.STS_SESSION_NAME, stsSessionName)
+    
+    if (crossAccountType == "STS") {
+      reader
+        .option(KinesisOptions.STS_ROLE_ARN, crossAccountParam1)
+        .option(KinesisOptions.STS_SESSION_NAME, crossAccountParam2)
+      
+    } else {
+      reader
+        .option(KinesisOptions.AWS_ACCESS_KEY_ID, crossAccountParam1)
+        .option(KinesisOptions.AWS_SECRET_KEY, crossAccountParam2)
+      
+    }
 
     if (consumerType == KinesisOptions.EFO_CONSUMER_TYPE) {
       reader.option(KinesisOptions.CONSUMER_NAME, efoConsumerName)

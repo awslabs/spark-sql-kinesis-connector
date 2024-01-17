@@ -56,6 +56,9 @@ case class KinesisOptions (
                             stsRoleArn: Option[String],
                             stsSessionName: Option[String],
                             stsEndpointUrl: Option[String],
+                            awsAccessKeyId: Option[String],
+                            awsSecretKey: Option[String],
+                            sessionToken: Option[String],
                             kinesisRegion: String,
                             maxResultListShardsPerCall: Int = 1000,
                             waitTableActiveTimeoutSeconds: Int = 600,
@@ -106,6 +109,11 @@ object KinesisOptions {
   val STS_ROLE_ARN: String = PREFIX + "stsRoleArn"
   val STS_SESSION_NAME: String = PREFIX + "stsSessionName"
   val STS_ENDPOINT_URL: String = PREFIX + "stsEndpointUrl"
+  
+  val AWS_ACCESS_KEY_ID: String = PREFIX + "awsAccessKeyId"
+  val AWS_SECRET_KEY: String = PREFIX + "awsSecretKey"
+  val AWS_SESSION_TOKEN: String = PREFIX + "sessionToken"
+  
   val KINESIS_REGION: String = PREFIX + "kinesisRegion"
 
   val DYNAMODB_TABLE_NAME: String = DYNAMODB_PREFIX + "tableName"
@@ -274,6 +282,16 @@ object KinesisOptions {
     }
     val stsEndpointUrl: Option[String] = Option(parameters.get(STS_ENDPOINT_URL))
     
+    val awsAccessKeyId: Option[String] = Option(parameters.get(AWS_ACCESS_KEY_ID))
+    val awsSecretKey: Option[String] = {
+      val secret = Option(parameters.get(AWS_SECRET_KEY))
+      if (awsAccessKeyId.isDefined != secret.isDefined) {
+        throw new IllegalArgumentException(s"${AWS_ACCESS_KEY_ID} and ${AWS_SECRET_KEY} must be both defined or empty")
+      }
+      secret
+    }
+    val sessionToken: Option[String] = Option(parameters.get(AWS_SESSION_TOKEN))
+    
     val kinesisRegion = parameterGetStringOrElse(parameters, KINESIS_REGION,
       getRegionNameByEndpoint(endpointUrl))
 
@@ -346,6 +364,9 @@ object KinesisOptions {
       stsRoleArn = stsRoleArn,
       stsSessionName = stsSessionName,
       stsEndpointUrl = stsEndpointUrl,
+      awsAccessKeyId = awsAccessKeyId,
+      awsSecretKey = awsSecretKey,
+      sessionToken = sessionToken,
       kinesisRegion = kinesisRegion
     )
   }
