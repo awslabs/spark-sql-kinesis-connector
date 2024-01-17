@@ -18,8 +18,11 @@ package org.apache.spark.sql.connector.kinesis
 
 import java.net.URI
 
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
+import software.amazon.awssdk.auth.credentials.AwsSessionCredentials
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.http.apache.ApacheHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.sts.StsClient
@@ -32,7 +35,30 @@ import software.amazon.awssdk.services.sts.model.AssumeRoleRequest
  */
 sealed trait ConnectorAwsCredentialsProvider extends Serializable {
   def provider: AwsCredentialsProvider
-  def close(): Unit
+  def close(): Unit = {}
+}
+
+// Using permanent credentials are not recommended due to security concerns.
+case class BasicAwsCredentials (
+     awsAccessKeyId: String,
+     awsSecretKey: String) extends ConnectorAwsCredentialsProvider {
+  def provider: AwsCredentialsProvider = {
+      StaticCredentialsProvider.create(
+          AwsBasicCredentials.create(awsAccessKeyId, awsSecretKey)
+          )
+    }
+}
+
+  // For test only. Session credentials can expire. Don't use this in production environment.
+case class BasicAwsSessionCredentials(
+    awsAccessKeyId: String,
+    awsSecretKey: String,
+    sessionToken: String) extends ConnectorAwsCredentialsProvider {
+  def provider: AwsCredentialsProvider = try {
+    StaticCredentialsProvider.create(
+        AwsSessionCredentials.create(awsAccessKeyId, awsSecretKey, sessionToken)
+       )
+   }
 }
 
 case class ConnectorDefaultCredentialsProvider() extends ConnectorAwsCredentialsProvider {
@@ -110,7 +136,10 @@ class Builder {
   private var stsSessionName: Option[String] = None
   private var stsRegion: Option[String] = None
   private var stsEndpoint: Option[String] = None
-
+  
+  private var awsAccessKeyIdOpt: Option[String] = None
+  private var awsSecretKeyOpt: Option[String] = None
+  private var sessionTokenOpt: Option[String] = None
   def stsCredentials(roleArn: Option[String],
                      sessionName: Option[String],
                      region: String,
@@ -122,11 +151,21 @@ class Builder {
     this
   }
 
+  def staticCredentials(
+    awsAccessKeyId: Option[String],
+    awsSecretKey: Option[String],
+    sessionToken: Option[String]
+  ): Builder = {
+    awsAccessKeyIdOpt = awsAccessKeyId
+    awsSecretKeyOpt = awsSecretKey
+    sessionTokenOpt = sessionToken
+    this
+  }
+  
   def build(): ConnectorAwsCredentialsProvider = {
     val defaultProvider = ConnectorDefaultCredentialsProvider()
 
-    stsRoleArn
-      .map { _ =>
+    stsRoleArn.map { _ =>
         ConnectorSTSCredentialsProvider(
           stsRoleArn.get,
           stsSessionName.get,
@@ -134,8 +173,22 @@ class Builder {
           defaultProvider,
           stsEndpoint
         )
+      }.getOrElse {
+        sessionTokenOpt.map { _ =>
+          BasicAwsSessionCredentials(
+            awsAccessKeyIdOpt.get,
+            awsSecretKeyOpt.get,
+            sessionTokenOpt.get
+          )
+        }.getOrElse {
+          awsAccessKeyIdOpt.map { _ =>
+            BasicAwsCredentials(
+              awsAccessKeyIdOpt.get,
+              awsSecretKeyOpt.get
+                )
+          }.getOrElse(defaultProvider)
+        }
       }
-      .getOrElse(defaultProvider)
   }
 }
 

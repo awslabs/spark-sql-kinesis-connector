@@ -50,16 +50,22 @@ abstract class KinesisSourceCrossAccountItSuite(
   private val CROSS_ACCOUNT_KINESIS_END_POINT = "CROSS_ACCOUNT_KINESIS_END_POINT"
   private val CROSS_ACCOUNT_KINESIS_STREAM_NAME = "CROSS_ACCOUNT_KINESIS_STREAM_NAME"
   private val KINESIS_STS_ROLE_ARN = "KINESIS_STS_ROLE_ARN"
+  private val KINESIS_ACCESS_KEY_ID = "KINESIS_ACCESS_KEY_ID"
+  private val KINESIS_SECRET_KEY = "KINESIS_SECRET_KEY"
+  private val KINESIS_SESSION_TOKEN = "KINESIS_SESSION_TOKEN"
 
   private val crossAccountEndpointUrl = sys.env.get(CROSS_ACCOUNT_KINESIS_END_POINT)
   private val crossAccountRegion = crossAccountEndpointUrl.map(getRegionNameByEndpoint)
   private val crossAccountStreamName = sys.env.get(CROSS_ACCOUNT_KINESIS_STREAM_NAME)
-  private val stsRoleArn = sys.env.get(KINESIS_STS_ROLE_ARN)
+  private val stsRoleArnOpt = sys.env.get(KINESIS_STS_ROLE_ARN)
   private val stsSessionName = "testsession"
+  private val awsAccessKeyIdOpt = sys.env.get(KINESIS_ACCESS_KEY_ID)
+  private val awsSecretKeyOpt = sys.env.get(KINESIS_SECRET_KEY)
+  private val sessionTokenOpt = sys.env.get(KINESIS_SESSION_TOKEN)
 
   private lazy val credentialsProvider = ConnectorAwsCredentialsProvider.builder
       .stsCredentials(
-        stsRoleArn,
+        stsRoleArnOpt,
         Some(stsSessionName),
         crossAccountRegion.get
       )
@@ -95,7 +101,7 @@ abstract class KinesisSourceCrossAccountItSuite(
     shardIdToSeqNumbers.toMap
   }
 
-  def createCrossAccountSparkReadStream(consumerType: String,
+  def createCrossAccountSparkStsReadStream(consumerType: String,
                             utils: KinesisTestUtils): DataStreamReader = {
     val reader = spark
       .readStream
@@ -106,7 +112,7 @@ abstract class KinesisSourceCrossAccountItSuite(
       .option(CONSUMER_TYPE, consumerType)
       .option(MAX_DATA_QUEUE_EMPTY_COUNT, defaultKinesisOptions.maxDataQueueEmptyCount.toString)
       .option(DATA_QUEUE_WAIT_TIME_SEC, defaultKinesisOptions.dataQueueWaitTimeout.getSeconds.toString)
-      .option(STS_ROLE_ARN, stsRoleArn.get)
+      .option(STS_ROLE_ARN, stsRoleArnOpt.get)
       .option(STS_SESSION_NAME, stsSessionName)
 
     if (consumerType == EFO_CONSUMER_TYPE) {
@@ -117,10 +123,10 @@ abstract class KinesisSourceCrossAccountItSuite(
   }
 
 
-  private def testIfEnabled(testName: String)(testBody: => Unit): Unit = {
+  private def testIfStsEnabled(testName: String)(testBody: => Unit): Unit = {
     if (crossAccountEndpointUrl.isDefined
       && crossAccountStreamName.isDefined
-      && stsRoleArn.isDefined
+      && stsRoleArnOpt.isDefined
     ) {
       test(testName)(testBody)
     } else {
@@ -129,16 +135,72 @@ abstract class KinesisSourceCrossAccountItSuite(
     }
   }
 
-  testIfEnabled("Kinesis connector reads from another account") {
-    pushDataToKinesis(Array("0"))
+  def createCrossAccountSparkReadStream(consumerType: String,
+                                        awsAccessKeyId: String,
+                                        awsSecretKey: String,
+                                        sessionTokenOpt: Option[String],
+                                        utils: KinesisTestUtils): DataStreamReader = {
+    val reader = spark
+     .readStream
+     .format(AWS_KINESIS_SHORT_NAME)
+     .option(REGION, defaultKinesisOptions.region)
+     .option(STREAM_NAME, crossAccountStreamName.get)
+     .option(ENDPOINT_URL, crossAccountEndpointUrl.get)
+     .option(CONSUMER_TYPE, consumerType)
+     .option(MAX_DATA_QUEUE_EMPTY_COUNT, defaultKinesisOptions.maxDataQueueEmptyCount.toString)
+     .option(DATA_QUEUE_WAIT_TIME_SEC, defaultKinesisOptions.dataQueueWaitTimeout.getSeconds.toString)
+     .option(AWS_ACCESS_KEY_ID, awsAccessKeyId)
+     .option(AWS_SECRET_KEY, awsSecretKey)
+    
+      if (consumerType == EFO_CONSUMER_TYPE) {
+        reader.option(CONSUMER_NAME, defaultKinesisOptions.consumerName.get)
+      }
+    
+     if (sessionTokenOpt.isDefined) {
+       reader.option(AWS_SESSION_TOKEN, sessionTokenOpt.get)
+     }
+  
+    reader
+  }
+  
+  private def testIfAccessKeyEnabled(testName: String)(testBody: => Unit): Unit = {
+    if (crossAccountEndpointUrl.isDefined
+     && crossAccountStreamName.isDefined
+     && stsRoleArnOpt.isDefined
+     && awsAccessKeyIdOpt.isDefined
+     && awsSecretKeyOpt.isDefined
+   ) {
+       test(testName)(testBody)
+     } else {
+       ignore(s"$testName [enable by setting env var $CROSS_ACCOUNT_KINESIS_END_POINT, $CROSS_ACCOUNT_KINESIS_STREAM_NAME, " +
+           s"$KINESIS_STS_ROLE_ARN, $KINESIS_ACCESS_KEY_ID, $KINESIS_SECRET_KEY, $KINESIS_SESSION_TOKEN]")(testBody)
+     }
+  }
+  
+  testIfStsEnabled("Kinesis connector reads from another account using STS") {
+   val reader = createCrossAccountSparkStsReadStream(consumerType, testUtils)
+    runTestWithSparkRead(reader)
+  }
+    
+  testIfAccessKeyEnabled("Kinesis connector reads from another account using access key") {
+   val reader = createCrossAccountSparkReadStream(consumerType,
+         awsAccessKeyIdOpt.get,
+         awsSecretKeyOpt.get,
+         sessionTokenOpt,
+         testUtils)
+  
+        runTestWithSparkRead(reader)
+  }
+  
+  private def runTestWithSparkRead(reader: DataStreamReader): Unit = {
+    
+      pushDataToKinesis(Array("0"))
 
     // sleep for 1 s to avoid any concurrency issues
     Thread.sleep(1000.toLong)
     val clock = new StreamManualClock
 
     val checkpointDir = getRandomCheckpointDir
-
-    val reader = createCrossAccountSparkReadStream(consumerType, testUtils)
 
     val kinesis = reader.load()
       .selectExpr("CAST(data AS STRING)")

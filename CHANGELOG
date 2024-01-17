@@ -1,0 +1,10 @@
+Changelog
+=========
+
+v1.1.0  
+----------------------------
+- support cross account access for kinesis consumer using Access Key 
+
+v1.0.0
+----------------------------
+- first release
