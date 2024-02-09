@@ -95,7 +95,7 @@ object KinesisProducerTest {
     )
     dataStopLatch.await()
 
-    // Wait for one minute to ensure all data produced to Kinesis
+    // Wait for a while to ensure all data produced to Kinesis
     query.awaitTermination(waitBeforeStopSeconds * 1000)
     query.stop
   }

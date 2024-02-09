@@ -17,13 +17,14 @@
 package org.apache.spark.sql.connector.kinesis
 
 import java.time.Duration
-import scala.collection.JavaConverters._
+
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import scala.collection.JavaConverters._
+
 import org.apache.spark.sql.connector.kinesis.KinesisOptions._
 import org.apache.spark.sql.connector.kinesis.KinesisOptionsSuite._
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 import org.apache.spark.util.Utils
-
 
 
 class KinesisOptionsSuite extends KinesisTestBase {
@@ -37,6 +38,7 @@ class KinesisOptionsSuite extends KinesisTestBase {
     options.failOnDataLoss shouldBe DEFAULT_FAIL_ON_DATA_LOSS
     options.avoidEmptyBatches shouldBe DEFAULT_AVOID_EMPTY_BATCHES
     options.maxFetchRecordsPerShard shouldBe DEFAULT_MAX_FETCH_RECORDS_PER_SHARD
+    options.maxFetchTimePerShardSec shouldBe None
     options.startingPosition shouldBe DEFAULT_STARTING_POSITION
     options.describeShardIntervalMs shouldBe Utils.timeStringAsMs(DEFAULT_DESCRIBE_SHARD_INTERVAL)
     options.minBatchesToRetain shouldBe None
@@ -78,6 +80,7 @@ class KinesisOptionsSuite extends KinesisTestBase {
     options.failOnDataLoss shouldBe DEFAULT_FAIL_ON_DATA_LOSS
     options.avoidEmptyBatches shouldBe DEFAULT_AVOID_EMPTY_BATCHES
     options.maxFetchRecordsPerShard shouldBe DEFAULT_MAX_FETCH_RECORDS_PER_SHARD
+    options.maxFetchTimePerShardSec shouldBe None
     options.startingPosition shouldBe DEFAULT_STARTING_POSITION
     options.describeShardIntervalMs shouldBe Utils.timeStringAsMs(DEFAULT_DESCRIBE_SHARD_INTERVAL)
     options.minBatchesToRetain shouldBe None
@@ -133,6 +136,7 @@ class KinesisOptionsSuite extends KinesisTestBase {
       "kinesis.consumerName" -> testConsumerName,
       "kinesis.failOnDataLoss" -> "true",
       "kinesis.maxFetchRecordsPerShard" -> "500",
+      "kinesis.maxFetchTimePerShardSec" -> "60",
       "kinesis.startingPosition" -> "EARLIEST",
       "kinesis.describeShardInterval" -> "5s",
       "kinesis.minBatchesToRetain" -> "50",
@@ -167,6 +171,7 @@ class KinesisOptionsSuite extends KinesisTestBase {
     options.consumerName shouldBe Some(testConsumerName)
     options.failOnDataLoss shouldBe true
     options.maxFetchRecordsPerShard shouldBe 500
+    options.maxFetchTimePerShardSec shouldBe Some(60)
     options.startingPosition shouldBe "EARLIEST"
     options.describeShardIntervalMs shouldBe 5000
     options.minBatchesToRetain shouldBe Some(50)
@@ -213,6 +218,20 @@ class KinesisOptionsSuite extends KinesisTestBase {
     intercept[IllegalArgumentException] {
       KinesisOptions(new CaseInsensitiveStringMap(params.asJava))
     }
+  }
+
+  test("MAX_FETCH_TIME_PER_SHARD_SEC must be >= 10") {
+    val params = collection.mutable.Map(defaultPollingOptionMap.toSeq: _*) + (MAX_FETCH_TIME_PER_SHARD_SEC -> "5")
+
+    intercept[IllegalArgumentException] {
+      KinesisOptions(new CaseInsensitiveStringMap(params.asJava))
+    }
+
+    val params2 = collection.mutable.Map(defaultPollingOptionMap.toSeq: _*) + (MAX_FETCH_TIME_PER_SHARD_SEC -> "10")
+    
+    val options2 = KinesisOptions(new CaseInsensitiveStringMap(params2.asJava))
+
+    options2.maxFetchTimePerShardSec shouldBe Some(10)
   }
 
   test("get region from endpoint url") {
