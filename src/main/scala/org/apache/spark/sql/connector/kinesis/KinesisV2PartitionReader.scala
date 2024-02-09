@@ -67,9 +67,10 @@ class KinesisV2PartitionReader (schema: StructType,
 
   logInfo(s"KinesisV2PartitionReader for batch ${sourcePartition.batchId} with " +
     s"sourcePartition start - ${sourcePartition.startShardInfo}, stop - ${sourcePartition.stopShardInfo}")
-
+  
   private val kinesisShardId = sourcePartition.startShardInfo.shardId
-
+  private val startTimestamp: Long = System.currentTimeMillis
+  
   val kinesisStreamShard: StreamShard = StreamShard(streamName, Shard.builder().shardId(kinesisShardId).build())
   val kinesisPosition: KinesisPosition = KinesisPosition.make(sourcePartition.startShardInfo.iteratorType,
     sourcePartition.startShardInfo.iteratorPosition,
@@ -118,6 +119,12 @@ class KinesisV2PartitionReader (schema: StructType,
 
   shardConsumersExecutor.submit(shardConsumer)
 
+  private def hasTimeForMoreRecords(currentTimestamp: Long): Boolean = {
+    // always return true if kinesisOptions.maxFetchTimePerShardSec is None
+    kinesisOptions.maxFetchTimePerShardSec.forall { maxFetchTimePerShardSec =>
+      (currentTimestamp - startTimestamp) < (maxFetchTimePerShardSec * 1000L)
+    }
+  }
   private def createShardConsumersThreadPool(taskName: String): ExecutorService = Executors.newCachedThreadPool(
     new ThreadFactory() {
       final private val threadCount = new AtomicLong(0)
@@ -198,7 +205,8 @@ class KinesisV2PartitionReader (schema: StructType,
       
       var emptyCnt = lastEmptyCnt
       var fetchedRecord: Option[KinesisUserRecord] = None
-      while (fetchedRecord.isEmpty && fetchNext)  {
+
+      def pollNextUserRecord(): Unit = {
         val userRecord = dataQueue.poll(dataQueueWaitTimeout.getSeconds, TimeUnit.SECONDS)
         if (userRecord == null) {
           logDebug(s"getNext emptyCnt ${emptyCnt}")
@@ -210,7 +218,7 @@ class KinesisV2PartitionReader (schema: StructType,
         } else if (KinesisUserRecord.emptyUserRecord(userRecord)) {
           logInfo(s"Got empty user record with millisBehindLatest ${userRecord.millisBehindLatest} for ${kinesisPosition}")
 
-          if(userRecord.millisBehindLatest > 0) {
+          if (userRecord.millisBehindLatest > 0) {
             // when the stream not receiving new data for a long time, there can be real data events
             // after the empty ones, reset the counter
             lastEmptyCnt = 0
@@ -218,35 +226,46 @@ class KinesisV2PartitionReader (schema: StructType,
           }
 
         } else {
-            if (userRecord.data.length > 0)
-            {
-              lastEmptyCnt = 0
-              emptyCnt = 0
+          if (userRecord.data.length > 0) {
+            lastEmptyCnt = 0
+            emptyCnt = 0
 
-              fetchedRecord = Some(userRecord)
-              lastReadTimeMs = System.currentTimeMillis()
-              logDebug(s"Milli secs behind is ${userRecord.millisBehindLatest}")
+            fetchedRecord = Some(userRecord)
+            lastReadTimeMs = System.currentTimeMillis()
+            logDebug(s"Milli secs behind is ${userRecord.millisBehindLatest}")
 
-              if (
-                // this check assumes the records in dataQueue is in order
-                reachStopShardInfo(userRecord, sourcePartition.stopShardInfo)
-              ) {
-                fetchNext = false
-              }
-              else if (userRecord.millisBehindLatest.longValue() == 0
-                && userRecord.isLastSubSequence
-                && dataQueue.size() == 0
-              ) {
-                // stop fetching if next dataQueue.poll returns null
-                lastEmptyCnt = Math.max(maxDataQueueEmptyCount - 1, 0)
-              }
-            }
-            else {
-              logError(s"Got userRecord with zero data length ${userRecord}. Not supposed to reach here.")
+            if (
+            // this check assumes the records in dataQueue is in order
+              reachStopShardInfo(userRecord, sourcePartition.stopShardInfo)
+            ) {
+              logInfo(s"stopShardInfo reached for shard ${kinesisShardId}" +
+                s" with userRecord ${userRecord.sequenceNumber}," +
+                s" inputPartition stopShardInfo ${sourcePartition.stopShardInfo}")
               fetchNext = false
             }
+            else if (userRecord.millisBehindLatest.longValue() == 0
+              && userRecord.isLastSubSequence
+              && dataQueue.size() == 0
+            ) {
+              // stop fetching if next dataQueue.poll returns null
+              lastEmptyCnt = Math.max(maxDataQueueEmptyCount - 1, 0)
+            }
+          }
+          else {
+            logError(s"Got userRecord with zero data length ${userRecord}. Not supposed to reach here.")
+            fetchNext = false
+          }
         }
+      }
 
+      while (fetchedRecord.isEmpty && fetchNext)  {
+        val currentTimestamp: Long = System.currentTimeMillis
+        if(hasTimeForMoreRecords(currentTimestamp)) {
+          pollNextUserRecord()
+        } else {
+          logInfo(s"Max fetch time reached at shard ${kinesisShardId}: current ${currentTimestamp}, start ${startTimestamp}")
+          fetchNext = false
+        }
       }
 
       val throwable = errorRef.get()
@@ -255,14 +274,20 @@ class KinesisV2PartitionReader (schema: StructType,
       }
       
       if (fetchedRecord.isEmpty) {
+        logInfo(s"Fetch completed for batch ${batchId}/shard ${kinesisShardId}. Number of records read: ${numRecordRead}.")
         finished = true
         null
       } else {
         val record = fetchedRecord.get
         numRecordRead +=1
         if (numRecordRead >= kinesisOptions.maxFetchRecordsPerShard) {
+          logInfo(s"Number of records read:${numRecordRead} reached maxFetchRecordsPerShard:${kinesisOptions.maxFetchRecordsPerShard}" +
+            s" at shard ${kinesisShardId}.")
           fetchNext = false
+        } else if ((numRecordRead % 1000) == 0) {
+          logInfo(s"Number of records read:${numRecordRead} at shard ${kinesisShardId}.")
         }
+        
         lastReadSequenceNumber = record.sequenceNumber
 
         InternalRow.fromSeq(schema.fieldNames.map {

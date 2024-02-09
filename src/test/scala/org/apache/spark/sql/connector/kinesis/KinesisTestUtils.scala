@@ -209,8 +209,9 @@ class KinesisTestUtils(streamShardCount: Int = 2) extends Logging {
       Thread.sleep(TimeUnit.SECONDS.toMillis(describeStreamPollTimeSeconds))
       describeStream(streamNameToWaitFor).foreach { description =>
         val streamStatus = description.getStreamStatus
-        logDebug(s"\t- current state: $streamStatus\n")
-        if ("ACTIVE".equals(streamStatus)) {
+        logInfo(s"\t $streamNameToWaitFor - current state: $streamStatus\n")
+        if (streamStatus == "ACTIVE") {
+          Thread.sleep(TimeUnit.SECONDS.toMillis(10)) // Wait for extra time to ensure the status is stable
           return
         }
       }

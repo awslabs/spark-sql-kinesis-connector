@@ -20,7 +20,7 @@
 
   <groupId>org.apache.spark</groupId>
   <artifactId>spark-streaming-sql-kinesis-connector_2.12</artifactId>
-  <version>1.1.0</version>
+  <version>1.2.0-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>Spark Structured Streaming Kinesis Connector</name>
   <description>Connector to read from and write into Kinesis from Structured Streaming Applications</description>
@@ -32,8 +32,8 @@
     <fasterxml.jackson.version>2.14.3</fasterxml.jackson.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <aws.sdkv2.version>2.19.33</aws.sdkv2.version>
-    <aws.kpl.version>0.15.7</aws.kpl.version>
+    <aws.sdkv2.version>2.23.9</aws.sdkv2.version>
+    <aws.kpl.version>0.15.8</aws.kpl.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
@@ -51,11 +51,11 @@
   </dependencyManagement>
 
   <dependencies>
-
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>kinesis</artifactId>
     </dependency>
+    
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>dynamodb</artifactId>
@@ -346,6 +346,12 @@
                     <include>software.amazon.awssdk:dynamodb:*</include>
                     <include>software.amazon.awssdk:sdk-core:*</include>
                     <include>software.amazon.awssdk:utils:*</include>
+                    <include>software.amazon.awssdk:identity-spi:*</include>
+                    <include>software.amazon.awssdk:http-auth-spi:*</include>
+                    <include>software.amazon.awssdk:http-auth-aws:*</include>
+                    <include>software.amazon.awssdk:http-auth:*</include>
+                    <include>software.amazon.awssdk:checksums-spi:*</include>
+                    <include>software.amazon.awssdk:checksums:*</include>
                     <include>software.amazon.awssdk:annotations:*</include>
                     <include>software.amazon.awssdk:apache-client:*</include>
                     <include>software.amazon.awssdk:arns:*</include>
