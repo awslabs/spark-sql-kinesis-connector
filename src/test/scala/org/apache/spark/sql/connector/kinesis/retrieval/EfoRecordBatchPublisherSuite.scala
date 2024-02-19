@@ -484,7 +484,7 @@ class EfoRecordBatchPublisherSuite extends KinesisTestBase {
 
     val state = publisher.runProcessLoop(new TestConsumer(publisher.initialStartingPosition))
 
-    state shouldBe RecordBatchPublisherRunStatus.COMPLETE
+    state shouldBe RecordBatchPublisherRunStatus.INCOMPLETE
     kinesisClient.getNumberOfSubscribeToShardInvocations shouldBe 1
   }
 

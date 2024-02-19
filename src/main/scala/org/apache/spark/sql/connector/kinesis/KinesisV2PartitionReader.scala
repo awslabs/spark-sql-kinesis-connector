@@ -27,9 +27,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
-
 import software.amazon.awssdk.services.kinesis.model.Shard
-
 import org.apache.spark.TaskContext
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.InternalRow
@@ -42,7 +40,6 @@ import org.apache.spark.sql.connector.kinesis.retrieval.KinesisUserRecord
 import org.apache.spark.sql.connector.kinesis.retrieval.RecordBatchPublisher
 import org.apache.spark.sql.connector.kinesis.retrieval.RecordBatchPublisherFactory
 import org.apache.spark.sql.connector.kinesis.retrieval.SequenceNumber
-import org.apache.spark.sql.connector.kinesis.retrieval.SequenceNumber.SENTINEL_SHARD_ENDING_SEQUENCE_NUM
 import org.apache.spark.sql.connector.kinesis.retrieval.ShardConsumer
 import org.apache.spark.sql.connector.kinesis.retrieval.StreamShard
 import org.apache.spark.sql.connector.read.PartitionReader
@@ -139,12 +136,8 @@ class KinesisV2PartitionReader (schema: StructType,
 
   override def isRunning: Boolean = !closed.get()
 
-  override def updateState(streamShard: StreamShard, sequenceNumber: SequenceNumber): Unit = {
-    sequenceNumber match {
-      case SENTINEL_SHARD_ENDING_SEQUENCE_NUM => hasShardClosed.set(true)
-      case _ =>
-    }
-  }
+  // updateState currently doing nothing
+  override def updateState(streamShard: StreamShard, sequenceNumber: SequenceNumber): Unit = {}
 
   override def enqueueRecord(streamShard: StreamShard, record: KinesisUserRecord): Boolean = {
 
@@ -215,6 +208,10 @@ class KinesisV2PartitionReader (schema: StructType,
             logInfo(s"getNext emptyCnt ${emptyCnt} >= ${maxDataQueueEmptyCount}. Stop fetchNext.")
             fetchNext = false
           }
+        } else if (KinesisUserRecord.shardEndUserRecord(userRecord)) {
+          logInfo(s"Got shard end user record for ${kinesisStreamShard}")
+          hasShardClosed.set(true)
+          fetchNext = false
         } else if (KinesisUserRecord.emptyUserRecord(userRecord)) {
           logInfo(s"Got empty user record with millisBehindLatest ${userRecord.millisBehindLatest} for ${kinesisPosition}")
 
@@ -247,7 +244,7 @@ class KinesisV2PartitionReader (schema: StructType,
               && userRecord.isLastSubSequence
               && dataQueue.size() == 0
             ) {
-              // stop fetching if next dataQueue.poll returns null
+              // wait for one more loop before stop fetching
               lastEmptyCnt = Math.max(maxDataQueueEmptyCount - 1, 0)
             }
           }
@@ -274,7 +271,7 @@ class KinesisV2PartitionReader (schema: StructType,
       }
       
       if (fetchedRecord.isEmpty) {
-        logInfo(s"Fetch completed for batch ${batchId}/shard ${kinesisShardId}. Number of records read: ${numRecordRead}.")
+        logInfo(s"Fetch completed for batch ${batchId}/shard ${kinesisShardId}, ${lastReadSequenceNumber}. Number of records read: ${numRecordRead}.")
         finished = true
         null
       } else {
@@ -282,10 +279,10 @@ class KinesisV2PartitionReader (schema: StructType,
         numRecordRead +=1
         if (numRecordRead >= kinesisOptions.maxFetchRecordsPerShard) {
           logInfo(s"Number of records read:${numRecordRead} reached maxFetchRecordsPerShard:${kinesisOptions.maxFetchRecordsPerShard}" +
-            s" at shard ${kinesisShardId}.")
+            s" at shard ${kinesisShardId}, ${record.sequenceNumber}.")
           fetchNext = false
         } else if ((numRecordRead % 1000) == 0) {
-          logInfo(s"Number of records read:${numRecordRead} at shard ${kinesisShardId}.")
+          logInfo(s"Number of records read:${numRecordRead} at shard ${kinesisShardId}, ${record.sequenceNumber}.")
         }
         
         lastReadSequenceNumber = record.sequenceNumber
@@ -304,22 +301,22 @@ class KinesisV2PartitionReader (schema: StructType,
     }
 
     override protected def close(): Unit = synchronized {
-      logInfo(s"KinesisV2PartitionReader ${sourcePartition.startShardInfo} underlying iterator close ")
+      logInfo(s"Close ${sourcePartition.startShardInfo} underlying iterator  ")
     }
   }
 
   override def next(): Boolean = {
-    logDebug("KinesisV2PartitionReader next")
+    logDebug("KinesisV2PartitionReader.next")
     underlying.hasNext
   }
 
   override def get(): InternalRow = {
-    logDebug("KinesisV2PartitionReader get")
+    logDebug("KinesisV2PartitionReader.get")
     underlying.next()
   }
 
   override def close(): Unit = {
-    logInfo(s"KinesisV2PartitionReader start to close ${sourcePartition.startShardInfo}  current value of closed=${closed}")
+    logInfo(s"Start to close ${sourcePartition.startShardInfo}  current value of closed=${closed}")
     if(closed.compareAndSet(false, true)) {
       // clear the queue to unblock enqueue operations
       dataQueue.clear()
@@ -328,7 +325,7 @@ class KinesisV2PartitionReader (schema: StructType,
 
       tryAndIgnoreError("close kinesis reader")(kinesisReader.close())
 
-      logDebug(s"[${Thread.currentThread().getName}] KinesisV2PartitionReader ${sourcePartition.startShardInfo} close done")
+      logInfo(s"[${Thread.currentThread().getName}] KinesisV2PartitionReader ${sourcePartition.startShardInfo} close done")
     }
   }
 
@@ -354,8 +351,7 @@ class KinesisV2PartitionReader (schema: StructType,
         sourcePartition.startShardInfo
       }
 
-    logInfo(s"Batch $batchId : metadataCommitter adding shard position for $kinesisShardId")
-    logDebug(s"shardInfo ${shardInfo}")
+    logInfo(s"Batch $batchId : metadataCommitter adding shard position for ${kinesisShardId}, shardInfo ${shardInfo}")
 
     metadataCommitter.add(batchId, kinesisShardId, shardInfo)
   }
@@ -366,7 +362,7 @@ class KinesisV2PartitionReader (schema: StructType,
     if (throwable == null) {
       updateMetadata(taskContext)
     } else {
-      logInfo("skip updateMetadata as stopped with error")
+      logWarning("skip updateMetadata as stopped with error")
     }
   }
 }

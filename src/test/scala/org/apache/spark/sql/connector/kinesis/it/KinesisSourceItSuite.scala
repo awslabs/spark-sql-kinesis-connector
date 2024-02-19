@@ -583,6 +583,9 @@ abstract class KinesisSourceItSuite(aggregateTestData: Boolean,
       waitUntilBatchProcessed(clock),
       CheckLastBatch(testData2.toArray: _*),
       StopStream,
+      Execute { _ =>
+        Thread.sleep(10000L)
+      },
       StartStream(Trigger.ProcessingTime(100), clock, Map.empty, checkpointDir),
       waitUntilBatchProcessed(clock),
       CheckLastBatch(testData3.toArray: _*),

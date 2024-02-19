@@ -17,14 +17,12 @@
 package org.apache.spark.sql.connector.kinesis.retrieval
 
 import java.time.Instant
-
 import scala.collection.JavaConverters._
-
 import software.amazon.awssdk.services.kinesis.model.EncryptionType
 import software.amazon.awssdk.services.kinesis.model.Record
 import software.amazon.awssdk.services.kinesis.model.Shard
-
 import org.apache.spark.sql.connector.kinesis.KinesisPosition.NO_SUB_SEQUENCE_NUMBER
+import org.apache.spark.sql.connector.kinesis.retrieval.SequenceNumber.SENTINEL_SHARD_ENDING_SEQUENCE_NUM
 case class RecordBatch (
     private val rawRecords: Seq[Record],
     streamShard: StreamShard,
@@ -115,8 +113,18 @@ object KinesisUserRecord {
     !emptyUserRecord(userRecord)
   }
 
-  def getEmptyUserRecord(millisBehindLatest: Long): KinesisUserRecord = {
+  def createEmptyUserRecord(millisBehindLatest: Long): KinesisUserRecord = {
     EMPTY_USER_RECORD.copy(millisBehindLatest = millisBehindLatest)
+  }
+
+  def createShardEndUserRecord: KinesisUserRecord = {
+    new KinesisUserRecord(
+      SENTINEL_SHARD_ENDING_SEQUENCE_NUM,
+      null, null, null, null, -1, false, -1, null)
+  }
+
+  def shardEndUserRecord(userRecord: KinesisUserRecord): Boolean = {
+    userRecord.sequenceNumber == SENTINEL_SHARD_ENDING_SEQUENCE_NUM
   }
 }
 

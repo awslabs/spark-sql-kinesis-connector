@@ -20,12 +20,10 @@ package org.apache.spark.sql.connector.kinesis.it
 import java.util.concurrent.Executors
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicBoolean
-
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatest.time.SpanSugar.convertLongToGrainOfTime
 import software.amazon.awssdk.services.kinesis.model.Shard
-
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.connector.kinesis.KinesisOptions._
 import org.apache.spark.sql.connector.kinesis.KinesisUtils
@@ -38,7 +36,6 @@ import org.apache.spark.sql.connector.kinesis.retrieval.KinesisUserRecord
 import org.apache.spark.sql.connector.kinesis.retrieval.RecordBatchPublisher
 import org.apache.spark.sql.connector.kinesis.retrieval.RecordBatchPublisherFactory
 import org.apache.spark.sql.connector.kinesis.retrieval.SequenceNumber
-import org.apache.spark.sql.connector.kinesis.retrieval.SequenceNumber.SENTINEL_SHARD_ENDING_SEQUENCE_NUM
 import org.apache.spark.sql.connector.kinesis.retrieval.ShardConsumer
 import org.apache.spark.sql.connector.kinesis.retrieval.StreamShard
 
@@ -69,18 +66,15 @@ abstract class ShardConsumerItSuite(aggregateTestData: Boolean, consumerType: St
     override def updateState(streamShard: StreamShard, sequenceNumber: SequenceNumber): Unit = {
       this.streamShard = streamShard
       this.sequenceNumber = sequenceNumber
-
-      sequenceNumber match {
-        case SENTINEL_SHARD_ENDING_SEQUENCE_NUM => hasShardEnd.set(true)
-        case _ =>
-      }
     }
 
     override def enqueueRecord(streamShard: StreamShard, record: KinesisUserRecord): Boolean = {
-      if (KinesisUserRecord.nonEmptyUserRecord(record)) {
+      if (KinesisUserRecord.shardEndUserRecord(record)) {
+        hasShardEnd.set(true)
+      } else if (KinesisUserRecord.nonEmptyUserRecord(record)) {
         recordCounter += 1
       }
-
+      
       true
     }
   }

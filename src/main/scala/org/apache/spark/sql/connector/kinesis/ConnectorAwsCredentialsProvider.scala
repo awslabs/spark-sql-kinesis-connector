@@ -16,6 +16,8 @@
  */
 package org.apache.spark.sql.connector.kinesis
 
+import org.apache.spark.internal.Logging
+
 import java.io.Closeable
 import java.net.URI
 
@@ -69,15 +71,17 @@ case class BasicAwsSessionCredentials(
 }
 
 
-case class RetryableDefaultCredentialsProvider() extends AwsCredentialsProvider with Closeable {
+case class RetryableDefaultCredentialsProvider() extends AwsCredentialsProvider with Closeable with Logging {
   private val provider = DefaultCredentialsProvider.builder()
     .asyncCredentialUpdateEnabled(true)
     .build()
   
-  val MAX_ATTEMPT = 10
+  private val MAX_ATTEMPT = 15
+  private val MAX_BACKOFF_MILL = 10000L
   override def resolveCredentials(): AwsCredentials = {
     val backoffManager = new FullJitterBackoffManager()
-
+    backoffManager.setMaxMillis(MAX_BACKOFF_MILL)
+    
     @tailrec
     def getCredentialsWithRetry(retries: Int): AwsCredentials = {
       Try {
@@ -86,9 +90,13 @@ case class RetryableDefaultCredentialsProvider() extends AwsCredentialsProvider 
         case Success(credentials) =>
           credentials
         case Failure(_) if retries > 0 =>
-          backoffManager.sleep(backoffManager.calculateFullJitterBackoff(MAX_ATTEMPT - retries + 1))
+          val waitTime = backoffManager.calculateFullJitterBackoff(MAX_ATTEMPT - retries + 1)
+          logWarning(s"getCredentialsWithRetry: sleep ${waitTime} millis, retry ${MAX_ATTEMPT - retries + 1}")
+          backoffManager.sleep(waitTime)
+          
           getCredentialsWithRetry(retries - 1) // Recursive call to retry
         case Failure(exception) =>
+          logWarning(s"getCredentialsWithRetry failed after retrying ${MAX_ATTEMPT} times")
           throw exception
       }
     }

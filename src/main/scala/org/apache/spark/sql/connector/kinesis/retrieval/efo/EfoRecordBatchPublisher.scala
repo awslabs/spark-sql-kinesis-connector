@@ -51,8 +51,7 @@ class EfoRecordBatchPublisher (
   private var attempt = 0
 
   override def runProcessLoop(recordBatchConsumer: RecordBatchConsumer): RecordsPublisherRunStatus = {
-
-    logInfo(s"Run EfoRecordBatchPublisher on ${streamShard}, startingPosition: ${nextStartingPosition}")
+    logDebug(s"EfoRecordBatchPublisher runProcessLoop on ${streamShard}, startingPosition: ${nextStartingPosition}")
     val eventConsumer = new Consumer[SubscribeToShardEvent]() {
       override def accept(event: SubscribeToShardEvent): Unit = {
         val recordBatch = RecordBatch (event.records.asScala, streamShard, event.millisBehindLatest)
@@ -87,8 +86,9 @@ class EfoRecordBatchPublisher (
         if (ex.getCause.isInstanceOf[ResourceNotFoundException]) {
           logWarning(s"Received ResourceNotFoundException. " +
             s"Either the shard does not exist, or the stream subscriber has been deregistered. " +
-            s"Marking this shard as complete ${consumerArn}::${streamShard}")
-          COMPLETE
+            s"Marking this shard as incomplete ${consumerArn}::${streamShard}")
+          // mark it as incomplete for the safe side so that the upper layer can retry
+          INCOMPLETE
         }
         else if (attempt >=
           (if (ex.isInstanceOf[EfoRecoverableSubscriberException])

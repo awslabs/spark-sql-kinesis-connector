@@ -69,6 +69,7 @@ object KinesisConsumerForEachBatchTest {
       .option(KinesisOptions.STARTING_POSITION, startPosition)
       .option(KinesisOptions.DYNAMODB_TABLE_NAME, tableName)
       .option(KinesisOptions.METADATA_COMMITTER_TYPE, committerType)
+      .option(KinesisOptions.MIN_BATCHES_TO_RETAIN, "2000") // keep more for debug
 
     if (consumerType == KinesisOptions.EFO_CONSUMER_TYPE) {
       reader.option(KinesisOptions.CONSUMER_NAME, efoConsumerName)

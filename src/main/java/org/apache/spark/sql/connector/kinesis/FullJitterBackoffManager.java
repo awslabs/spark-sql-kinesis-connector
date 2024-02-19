@@ -34,7 +34,7 @@ public class FullJitterBackoffManager {
   // the base backoff time in milliseconds
   private final long baseMillis = 1000L;
   // the maximum backoff time in milliseconds
-  private final long maxMillis = 3000L;
+  private long maxMillis = 3000L;
   // the power constant for exponential backoff
   private final double power = 1.5;
 
@@ -59,5 +59,14 @@ public class FullJitterBackoffManager {
   public void sleep(long millisToSleep) throws InterruptedException {
     Thread.sleep(millisToSleep);
   }
+  
+  public void setMaxMillis(long t) {
+    maxMillis = t;
+  }
+
+  public long getMaxMillis() {
+    return maxMillis;
+  }
+  
 }
 
