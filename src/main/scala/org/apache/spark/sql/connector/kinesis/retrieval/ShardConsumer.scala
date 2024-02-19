@@ -41,6 +41,8 @@ class ShardConsumer(
   private var lastSequenceNum: SequenceNumber = SequenceNumber.toSequenceNumber(recordBatchPublisher.initialStartingPosition)
   val streamShard = recordBatchPublisher.streamShard
 
+  logInfo(s"ShardConsumer init on ${streamShard}, startingPosition: ${recordBatchPublisher.initialStartingPosition}")
+  
   override def run(): Unit = {
     try {
       breakable{
@@ -50,7 +52,8 @@ class ShardConsumer(
             if (batch.userRecords.nonEmpty) {
               logDebug(s"${streamShard} - millis behind latest: ${batch.millisBehindLatest}," +
                 s" batch size: ${batch.totalSizeInBytes}, " +
-                s"number of raw Records ${batch.numberOfRawRecords}")
+                s"number of raw records ${batch.numberOfRawRecords}, " +
+                s"number of user records ${batch.numberOfDeaggregatedRecord}")
 
               batch.userRecords.foreach { userRecord =>
                 if (filterDeaggregatedRecord(userRecord)) {
@@ -62,7 +65,7 @@ class ShardConsumer(
 
               if (batch.millisBehindLatest > 0) {
                 // to avoid upper layer timeout
-                enqueueRecord(KinesisUserRecord.getEmptyUserRecord(batch.millisBehindLatest))
+                enqueueRecord(KinesisUserRecord.createEmptyUserRecord(batch.millisBehindLatest))
               }
             }
             
@@ -71,7 +74,8 @@ class ShardConsumer(
 
 
           if (result == COMPLETE) {
-            dataReader.updateState(streamShard, SENTINEL_SHARD_ENDING_SEQUENCE_NUM)
+            enqueueRecord(KinesisUserRecord.createShardEndUserRecord)
+            
             // close this consumer as reached the end of the subscribed shard
             break
           }
@@ -130,6 +134,7 @@ class ShardConsumer(
    */
   private def filterDeaggregatedRecord(record: KinesisUserRecord): Boolean = {
     if (!lastSequenceNum.isAggregated) return true
+    
     !(record.sequenceNumber.sequenceNumber == lastSequenceNum.sequenceNumber)||
       record.sequenceNumber.subSequenceNumber > lastSequenceNum.subSequenceNumber
   }

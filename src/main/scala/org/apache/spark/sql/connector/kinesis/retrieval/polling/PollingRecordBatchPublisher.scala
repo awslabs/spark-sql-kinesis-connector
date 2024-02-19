@@ -58,6 +58,8 @@ class PollingRecordBatchPublisher(
 
 
   override def runProcessLoop(recordBatchConsumer: RecordBatchConsumer): RecordsPublisherRunStatus = {
+    logDebug(s"PollingRecordBatchPublisher runProcessLoop on ${streamShard}, startingPosition: ${nextStartingPosition}")
+    
     val result = run((batch: RecordBatch) => {
       val latestSequenceNumber = recordBatchConsumer.accept(batch)
       lastRecordBatchSize = batch.numberOfDeaggregatedRecord
@@ -75,7 +77,7 @@ class PollingRecordBatchPublisher(
 
     if (!runningSupplier) return CANCELLED
     if (nextShardItr == null) return COMPLETE
-
+    
     val result = getRecords(nextShardItr, maxNumberOfRecords)
     val recordBatch = RecordBatch(result.records().asScala, streamShard, result.millisBehindLatest)
     val latestSequenceNumber = consumer.accept(recordBatch)

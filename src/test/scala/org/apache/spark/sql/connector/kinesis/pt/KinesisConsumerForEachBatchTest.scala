@@ -42,6 +42,9 @@ object KinesisConsumerForEachBatchTest {
     val checkpointDir = args(4)
     val writeToDir = args(5)
     val committerType = args(6)
+    val maxFetchTime = if (args.length > 7) args(7).toInt else 0
+    val maxFetchRecords = if (args.length > 8) args(8).toInt else 0
+    
     val tableName = checkpointDir.split("/").takeRight(2).mkString("-")
 
     val endpointUrl = "https://kinesis.us-east-2.amazonaws.com"
@@ -66,10 +69,18 @@ object KinesisConsumerForEachBatchTest {
       .option(KinesisOptions.STARTING_POSITION, startPosition)
       .option(KinesisOptions.DYNAMODB_TABLE_NAME, tableName)
       .option(KinesisOptions.METADATA_COMMITTER_TYPE, committerType)
-
+      .option(KinesisOptions.MIN_BATCHES_TO_RETAIN, "2000") // keep more for debug
 
     if (consumerType == KinesisOptions.EFO_CONSUMER_TYPE) {
       reader.option(KinesisOptions.CONSUMER_NAME, efoConsumerName)
+    }
+    
+    if (maxFetchTime > 0 ) {
+      reader.option(KinesisOptions.MAX_FETCH_TIME_PER_SHARD_SEC, maxFetchTime)
+    }
+
+    if (maxFetchRecords > 0) {
+      reader.option(KinesisOptions.MAX_FETCH_RECORDS_PER_SHARD, maxFetchRecords)
     }
 
     val inputDf = reader.load()

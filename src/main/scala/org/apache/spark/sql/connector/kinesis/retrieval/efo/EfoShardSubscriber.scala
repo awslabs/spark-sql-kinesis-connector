@@ -127,7 +127,7 @@ class EfoShardSubscriber(val consumerArn: String,
           // If there is space in the queue, insert the event to wake up blocked thread
           logInfo(s"runningMonitorThread send SubscriptionCancelEvent for streamShard ${streamShard}")
           if (!eventQueue.offer(new SubscriptionCancelEvent())) {
-            logInfo("SubscriptionCancelEvent not send as event queue is full.")
+            logInfo("SubscriptionCancelEvent not send as event queue is full for streamShard ${streamShard}")
           }
         }
         else {
@@ -261,16 +261,14 @@ class EfoShardSubscriber(val consumerArn: String,
           logInfo(s"Timed out waiting events from network, reacquiring subscription - ${consumerArn}::${streamShard}")
           result = INCOMPLETE
           break
-        }
-        else {
+        } else {
           if (subscriptionEvent.get.isSubscribeToShardEvent) { // Request for KDS to send the next record batch
             logTrace(s"EfoShardSubscriber isSubscribeToShardEvent - ${consumerArn}::${streamShard}")
             subscription.requestRecord()
             val event: SubscribeToShardEvent = subscriptionEvent.get.getSubscribeToShardEvent
             continuationSequenceNumber = event.continuationSequenceNumber
             eventConsumer.accept(event)
-          }
-          else {
+          } else {
             if (subscriptionEvent.get.isSubscriptionComplete) {
               // The subscription is complete, but the shard might not be, so we return incomplete
               logInfo(s"EfoShardSubscriber isSubscriptionComplete - ${consumerArn}::${streamShard}")
@@ -282,8 +280,7 @@ class EfoShardSubscriber(val consumerArn: String,
               result = INCOMPLETE
               break
 
-            }
-            else {
+            } else {
               logInfo(s"EfoShardSubscriber handleError - ${consumerArn}::${streamShard}")
               handleError(subscriptionEvent.get.getThrowable)
               result = INCOMPLETE

@@ -16,9 +16,18 @@
  */
 package org.apache.spark.sql.connector.kinesis
 
+import org.apache.spark.internal.Logging
+
+import java.io.Closeable
 import java.net.URI
 
+import scala.annotation.tailrec
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.AwsCredentials
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
@@ -33,9 +42,9 @@ import software.amazon.awssdk.services.sts.model.AssumeRoleRequest
  * Serializable interface providing a method executors can call to obtain an
  * AWSCredentialsProvider instance for authenticating to AWS services.
  */
-sealed trait ConnectorAwsCredentialsProvider extends Serializable {
+sealed trait ConnectorAwsCredentialsProvider extends Serializable with Closeable {
   def provider: AwsCredentialsProvider
-  def close(): Unit = {}
+  override def close(): Unit = {}
 }
 
 // Using permanent credentials are not recommended due to security concerns.
@@ -49,29 +58,64 @@ case class BasicAwsCredentials (
     }
 }
 
-  // For test only. Session credentials can expire. Don't use this in production environment.
+// For test only. Session credentials can expire. Don't use this in production environment.
 case class BasicAwsSessionCredentials(
     awsAccessKeyId: String,
     awsSecretKey: String,
     sessionToken: String) extends ConnectorAwsCredentialsProvider {
-  def provider: AwsCredentialsProvider = try {
+  def provider: AwsCredentialsProvider = {
     StaticCredentialsProvider.create(
         AwsSessionCredentials.create(awsAccessKeyId, awsSecretKey, sessionToken)
        )
    }
 }
 
-case class ConnectorDefaultCredentialsProvider() extends ConnectorAwsCredentialsProvider {
 
-  private var providerOpt: Option[DefaultCredentialsProvider] = None
-  override def provider: AwsCredentialsProvider = {
-    if (providerOpt.isEmpty) {
-      providerOpt = Some(
-        // create a new DefaultCredentialsProvider
-        DefaultCredentialsProvider.builder().build()
-      )
+case class RetryableDefaultCredentialsProvider() extends AwsCredentialsProvider with Closeable with Logging {
+  private val provider = DefaultCredentialsProvider.builder()
+    .asyncCredentialUpdateEnabled(true)
+    .build()
+  
+  private val MAX_ATTEMPT = 15
+  private val MAX_BACKOFF_MILL = 10000L
+  override def resolveCredentials(): AwsCredentials = {
+    val backoffManager = new FullJitterBackoffManager()
+    backoffManager.setMaxMillis(MAX_BACKOFF_MILL)
+    
+    @tailrec
+    def getCredentialsWithRetry(retries: Int): AwsCredentials = {
+      Try {
+        provider.resolveCredentials()
+      } match {
+        case Success(credentials) =>
+          credentials
+        case Failure(_) if retries > 0 =>
+          val waitTime = backoffManager.calculateFullJitterBackoff(MAX_ATTEMPT - retries + 1)
+          logWarning(s"getCredentialsWithRetry: sleep ${waitTime} millis, retry ${MAX_ATTEMPT - retries + 1}")
+          backoffManager.sleep(waitTime)
+          
+          getCredentialsWithRetry(retries - 1) // Recursive call to retry
+        case Failure(exception) =>
+          logWarning(s"getCredentialsWithRetry failed after retrying ${MAX_ATTEMPT} times")
+          throw exception
+      }
     }
 
+    getCredentialsWithRetry(MAX_ATTEMPT)
+  }
+
+  override def close(): Unit = {
+    provider.close()
+  }
+}
+
+case class ConnectorDefaultCredentialsProvider() extends ConnectorAwsCredentialsProvider {
+
+  private var providerOpt: Option[RetryableDefaultCredentialsProvider] = None
+  override def provider: AwsCredentialsProvider = {
+    if (providerOpt.isEmpty) {
+      providerOpt = Some(RetryableDefaultCredentialsProvider())
+    }
     providerOpt.get
   }
 

@@ -32,6 +32,7 @@ case class KinesisOptions (
                             failOnDataLoss: Boolean,
                             avoidEmptyBatches: Boolean,
                             maxFetchRecordsPerShard: Int,
+                            maxFetchTimePerShardSec: Option[Int],
                             startingPosition: String,
                             describeShardIntervalMs: Long,
                             minBatchesToRetain: Option[Int],
@@ -87,6 +88,7 @@ object KinesisOptions {
   val FAIL_ON_DATA_LOSS: String = PREFIX + "failOnDataLoss"
 
   val MAX_FETCH_RECORDS_PER_SHARD: String = PREFIX + "maxFetchRecordsPerShard"
+  val MAX_FETCH_TIME_PER_SHARD_SEC: String = PREFIX + "maxFetchTimePerShardSec"
   val STARTING_POSITION: String = PREFIX + "startingPosition"
   val DESCRIBE_SHARD_INTERVAL: String = PREFIX + "describeShardInterval"
   val MIN_BATCHES_TO_RETAIN: String = PREFIX + "minBatchesToRetain"
@@ -199,6 +201,18 @@ object KinesisOptions {
     val maxFetchRecordsPerShard: Int = parameterGetPositiveIntOrElse(parameters,
       MAX_FETCH_RECORDS_PER_SHARD,
       DEFAULT_MAX_FETCH_RECORDS_PER_SHARD)
+
+    val maxFetchTimePerShardSec: Option[Int] = parameterGetPositiveIntOrElseOption(parameters,
+      MAX_FETCH_TIME_PER_SHARD_SEC,
+      None
+    )
+
+    maxFetchTimePerShardSec.foreach { maxFetchTime =>
+      // maxFetchTime can't be too small as KDS sometimes takes more than 5s to response
+      if (maxFetchTime < 10) {
+        throw new IllegalArgumentException(s"${MAX_FETCH_TIME_PER_SHARD_SEC} must be no less than 10")
+      }
+    }
 
     val startingPosition: String = parameterGetStringOrElse(parameters,
       STARTING_POSITION,
@@ -338,6 +352,7 @@ object KinesisOptions {
       consumerType = consumerType,
       failOnDataLoss = failOnDataLoss,
       maxFetchRecordsPerShard = maxFetchRecordsPerShard,
+      maxFetchTimePerShardSec = maxFetchTimePerShardSec,
       startingPosition = startingPosition,
       describeShardIntervalMs = describeShardIntervalMs,
       avoidEmptyBatches = avoidEmptyBatches,

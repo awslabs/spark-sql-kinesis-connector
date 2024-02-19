@@ -291,7 +291,7 @@ class KinesisV2MicrobatchStream (
     // 2. metadataLog(end.batchId) exist (include both partial and full exists): rerun uncommitted batch
     // For scenario 2, use the shardIds from metadataLog to create InputPartitions. so the restored batch will only process the shards in metadataLog
     // For both scenarios, start's shard info is not really used except the assert
-    logDebug(s"planInputPartitions is start $start, end $end")
+    logInfo(s"planInputPartitions is start $start, end $end")
     val currBatchShardOffset = KinesisV2SourceOffset.getShardOffsets(end)
     val currBatchId = currBatchShardOffset.batchId
     val prevBatchId: Long = if (start != null) {
@@ -299,6 +299,7 @@ class KinesisV2MicrobatchStream (
     } else {
       -1.toLong
     }
+    logDebug(s"prevBatchId $prevBatchId, currBatchId $currBatchId")
     assert(prevBatchId <= currBatchId)
 
     val currBatchShardsInfo = getBatchShardsInfo(currBatchId)

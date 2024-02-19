@@ -62,7 +62,7 @@ class HDFSMetadataCommitter[T <: AnyRef : ClassTag](path: String,
   private val hadoopConfiguration = hadoopConf.value
   logInfo(s"HDFSMetadataCommitter metadataPath is ${metadataPath}, hadoopConf: ${hadoopConfiguration}")
   
-  protected val fileContext = FileContext.getFileContext(metadataPath.toUri, hadoopConfiguration)
+  protected val fileContext: FileContext = FileContext.getFileContext(metadataPath.toUri, hadoopConfiguration)
   
   if ( !fileContext.util().exists(metadataPath) ) {
     logInfo(s"HDFSMetadataCommitter create ${metadataPath}.")
@@ -123,6 +123,7 @@ class HDFSMetadataCommitter[T <: AnyRef : ClassTag](path: String,
       util.EnumSet.of(CREATE, OVERWRITE), CreateOpts.checksumParam(ChecksumOpt.createDisabled()))
     try {
       serialize(metadata, output)
+      output.flush()
       output.close()
     } catch {
       case e: Throwable =>
