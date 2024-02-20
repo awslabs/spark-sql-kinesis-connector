@@ -1,6 +1,6 @@
-# Kinesis Connector for Spark Structured Streaming 
+# Amazon Kinesis Data Streams Connector for Spark Structured Streaming 
 
-Implementation of Kinesis connector in Spark Structured Streaming with support to both GetRecords and SubscribeToShard (Enhanced Fan-Out, EFO) consumer types.
+Implementation of Amazon Kinesis Data Streams connector in Spark Structured Streaming with support to both GetRecords and SubscribeToShard (Enhanced Fan-Out, EFO) consumer types.
 
 
 
