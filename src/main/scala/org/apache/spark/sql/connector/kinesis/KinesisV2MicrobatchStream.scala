@@ -253,7 +253,8 @@ class KinesisV2MicrobatchStream (
     }.toArray
 
     if (!options.avoidEmptyBatches
-      || prevBatchId < 0
+      || prevBatchId < 0 // new job started without previous checkpoint
+      || currentShardOffsets.isEmpty // job started resuming from previous checkpoint
       || hasUnfinishedAggregateRecord(latestShardInfo)
       || hasShardEndAsOffset(latestShardInfo)
       || ShardSyncer.hasNewShards(mergedPrevShardsInfo, latestShardInfo)
@@ -266,7 +267,7 @@ class KinesisV2MicrobatchStream (
                 latestShardInfo.filter(_.iteratorType != ShardEnd.iteratorType)
       ))
     } else {
-      logDebug(s"Offsets are unchanged since ${KinesisOptions.AVOID_EMPTY_BATCHES} is enabled")
+      logInfo(s"Offsets are unchanged since ${KinesisOptions.AVOID_EMPTY_BATCHES} is enabled")
     }
 
 
@@ -299,7 +300,7 @@ class KinesisV2MicrobatchStream (
     } else {
       -1.toLong
     }
-    logDebug(s"prevBatchId $prevBatchId, currBatchId $currBatchId")
+    logInfo(s"prevBatchId $prevBatchId, currBatchId $currBatchId")
     assert(prevBatchId <= currBatchId)
 
     val currBatchShardsInfo = getBatchShardsInfo(currBatchId)
@@ -346,6 +347,7 @@ class KinesisV2MicrobatchStream (
   )
 
   override def initialOffset(): Offset = {
+    logInfo(s"initialOffset for ${options.streamName}")
     KinesisV2SourceOffset(new ShardOffsets(-1L, options.streamName))
   }
 

@@ -483,6 +483,60 @@ abstract class KinesisSourceItSuite(aggregateTestData: Boolean,
     )
   }
 
+  test("Kinesis connector restore from previous checkpoint (no new event including emtpy event in KDS)") {
+    testUtils.pushData(Array("0"), aggregateTestData)
+
+    // sleep for 1s to avoid any concurrency issues
+    Thread.sleep(1000.toLong)
+    val clock = new StreamManualClock
+
+    val checkpointDir = getRandomCheckpointDir
+
+    val reader = createSparkReadStream(consumerType, testUtils, checkpointDir, metadataCommitterType)
+
+    val kinesis = reader.load()
+      .selectExpr("CAST(data AS STRING)")
+      .as[String]
+    val result = kinesis.map(_.toInt)
+    val testData1 = 1 to 5
+    val testData2 = 6 to 10
+    testStream(result)(
+      StartStream(Trigger.ProcessingTime(100), clock, Map.empty, checkpointDir),
+      waitUntilBatchProcessed(clock),
+      Execute { _ =>
+        testUtils.pushData(testData1.map(_.toString).toArray, aggregateTestData, Some("1"))
+      },
+      AdvanceManualClock(100),
+      waitUntilBatchProcessed(clock),
+      CheckAnswer(testData1.toArray: _*),
+      Execute { _ =>
+        testUtils.pushData(testData2.map(_.toString).toArray, aggregateTestData, Some("1"))
+      },
+      AdvanceManualClock(100),
+      waitUntilBatchProcessed(clock),
+      CheckLastBatch(testData2.toArray: _*),
+      StopStream,
+
+      // All start/stop Should be successful
+      StartStream(Trigger.ProcessingTime(100), clock, Map.empty, checkpointDir),
+      waitUntilBatchProcessed(clock),
+      CheckLastBatch(Array[Int](): _*),
+      StopStream,
+      StartStream(Trigger.ProcessingTime(100), clock, Map.empty, checkpointDir),
+      waitUntilBatchProcessed(clock),
+      CheckLastBatch(Array[Int](): _*),
+      StopStream,
+      StartStream(Trigger.ProcessingTime(100), clock, Map.empty, checkpointDir),
+      waitUntilBatchProcessed(clock),
+      CheckLastBatch(Array[Int](): _*),
+      StopStream,
+      StartStream(Trigger.ProcessingTime(100), clock, Map.empty, checkpointDir),
+      waitUntilBatchProcessed(clock),
+      CheckLastBatch(Array[Int](): _*),
+      StopStream
+    )
+  }
+
   test("Kinesis connector reads based on MAX_FETCH_RECORDS_PER_SHARD") {
     testUtils.pushData(Array("0"), aggregateTestData)
 
