@@ -409,7 +409,8 @@ It's also possible to access cross account Kinesis data stream using user's AWS 
 Note: Using permanent credentials are not recommended due to security concerns.
 
 ## Known Limitations
-*  Trigger.AvailableNow is not supported.
+* Speculative execution is not supported
+* Trigger.AvailableNow is not supported.
 
 ## Kinesis Source Configuration
 
