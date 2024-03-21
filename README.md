@@ -408,6 +408,9 @@ It's also possible to access cross account Kinesis data stream using user's AWS 
 ```
 Note: Using permanent credentials are not recommended due to security concerns.
 
+## Known Limitations
+*  Trigger.AvailableNow is not supported.
+
 ## Kinesis Source Configuration
 
 | Name                                       | Default Value                                                | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -457,7 +460,6 @@ Note: Using permanent credentials are not recommended due to security concerns.
 | kinesis.sink.recordMaxBufferedTimeMs | 1000 (milliseconds)              | Specify the maximum buffered time of a record                |
 | kinesis.sink.maxConnections          | 1                                | Specify the maximum connections to Kinesis                   |
 | kinesis.sink.aggregationEnabled      | True                             | Specify if records should be aggregated before sending them to Kinesis |
-
 
 
 ## Security
