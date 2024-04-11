@@ -1,5 +1,9 @@
 Changelog
 =========
+v1.2.1
+----------------------------
+fix for issue #13: error at assert(prevBatchId <= currBatchId)
+
 v1.2.0
 ----------------------------
 - upgrade aws java sdk v2 to 2.23.9 and aws kpl to 0.15.8
