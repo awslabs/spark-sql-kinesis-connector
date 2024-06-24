@@ -1,8 +1,12 @@
 Changelog
 =========
+v1.3.0
+----------------------------
+- support custom connector credential provider
+
 v1.2.1
 ----------------------------
-fix for issue #13: error at assert(prevBatchId <= currBatchId)
+- fix for issue #13: error at assert(prevBatchId <= currBatchId)
 
 v1.2.0
 ----------------------------

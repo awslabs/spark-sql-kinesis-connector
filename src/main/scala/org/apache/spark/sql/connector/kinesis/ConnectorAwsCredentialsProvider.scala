@@ -16,8 +16,6 @@
  */
 package org.apache.spark.sql.connector.kinesis
 
-import org.apache.spark.internal.Logging
-
 import java.io.Closeable
 import java.net.URI
 
@@ -38,11 +36,15 @@ import software.amazon.awssdk.services.sts.StsClient
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest
 
+import org.apache.spark.internal.Logging
+import org.apache.spark.util.Utils
+
 /**
  * Serializable interface providing a method executors can call to obtain an
  * AWSCredentialsProvider instance for authenticating to AWS services.
  */
-sealed trait ConnectorAwsCredentialsProvider extends Serializable with Closeable {
+trait ConnectorAwsCredentialsProvider extends Serializable with Closeable {
+  def init(options: KinesisOptions, parameters: Option[String] = None): Unit = {}
   def provider: AwsCredentialsProvider
   override def close(): Unit = {}
 }
@@ -51,7 +53,7 @@ sealed trait ConnectorAwsCredentialsProvider extends Serializable with Closeable
 case class BasicAwsCredentials (
      awsAccessKeyId: String,
      awsSecretKey: String) extends ConnectorAwsCredentialsProvider {
-  def provider: AwsCredentialsProvider = {
+  override def provider: AwsCredentialsProvider = {
       StaticCredentialsProvider.create(
           AwsBasicCredentials.create(awsAccessKeyId, awsSecretKey)
           )
@@ -63,7 +65,7 @@ case class BasicAwsSessionCredentials(
     awsAccessKeyId: String,
     awsSecretKey: String,
     sessionToken: String) extends ConnectorAwsCredentialsProvider {
-  def provider: AwsCredentialsProvider = {
+  override def provider: AwsCredentialsProvider = {
     StaticCredentialsProvider.create(
         AwsSessionCredentials.create(awsAccessKeyId, awsSecretKey, sessionToken)
        )
@@ -137,7 +139,7 @@ case class ConnectorSTSCredentialsProvider(
 
   private var providerOpt: Option[StsAssumeRoleCredentialsProvider] = None
   private var stsClientOpt: Option[StsClient] = None
-  def provider: AwsCredentialsProvider = {
+  override def provider: AwsCredentialsProvider = {
     if (providerOpt.isEmpty) {
       val stsClientBuilder = StsClient.builder
         .credentialsProvider(credentialsProvider.provider)
@@ -184,6 +186,22 @@ class Builder {
   private var awsAccessKeyIdOpt: Option[String] = None
   private var awsSecretKeyOpt: Option[String] = None
   private var sessionTokenOpt: Option[String] = None
+  
+  private var customCredentialsProviderClass: Option[String] = None
+  private var customCredentialsProviderParam: Option[String] = None
+  
+  private var kinesisOptions: KinesisOptions = _
+
+  def kinesisOptions(options: KinesisOptions): Builder = {
+    kinesisOptions = options
+    this
+  }
+  
+  def customCredentials(customClass: String, customParams: Option[String]): Builder = {
+    customCredentialsProviderClass = Some(customClass)
+    customCredentialsProviderParam = customParams
+    this
+  }
   def stsCredentials(roleArn: Option[String],
                      sessionName: Option[String],
                      region: String,
@@ -206,10 +224,20 @@ class Builder {
     this
   }
   
+  private def createCredentialsProvider(providerClassName: String): ConnectorAwsCredentialsProvider = {
+    val providerClass = Utils.classForName(providerClassName)
+    providerClass.getConstructor().newInstance().asInstanceOf[ConnectorAwsCredentialsProvider]
+  }
+  
   def build(): ConnectorAwsCredentialsProvider = {
     val defaultProvider = ConnectorDefaultCredentialsProvider()
 
-    stsRoleArn.map { _ =>
+    if(customCredentialsProviderClass.isDefined) {
+      val provider = createCredentialsProvider(customCredentialsProviderClass.get)
+      provider.init(kinesisOptions, customCredentialsProviderParam)
+      provider
+    } else {
+      stsRoleArn.map { _ =>
         ConnectorSTSCredentialsProvider(
           stsRoleArn.get,
           stsSessionName.get,
@@ -229,10 +257,12 @@ class Builder {
             BasicAwsCredentials(
               awsAccessKeyIdOpt.get,
               awsSecretKeyOpt.get
-                )
+            )
           }.getOrElse(defaultProvider)
         }
       }
+    }
+
   }
 }
 
