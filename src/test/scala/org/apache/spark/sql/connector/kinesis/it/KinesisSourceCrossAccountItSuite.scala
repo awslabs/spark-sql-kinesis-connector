@@ -101,6 +101,30 @@ abstract class KinesisSourceCrossAccountItSuite(
     shardIdToSeqNumbers.toMap
   }
 
+  def createCrossAccountSparkCustomReadStream(consumerType: String,
+                                           utils: KinesisTestUtils): DataStreamReader = {
+    
+    val customClassName = "org.apache.spark.sql.connector.kinesis.it.CustomTestCredentialsProvider"
+    
+    val reader = spark
+      .readStream
+      .format(AWS_KINESIS_SHORT_NAME)
+      .option(REGION, defaultKinesisOptions.region)
+      .option(STREAM_NAME, crossAccountStreamName.get)
+      .option(ENDPOINT_URL, crossAccountEndpointUrl.get)
+      .option(CONSUMER_TYPE, consumerType)
+      .option(MAX_DATA_QUEUE_EMPTY_COUNT, defaultKinesisOptions.maxDataQueueEmptyCount.toString)
+      .option(DATA_QUEUE_WAIT_TIME_SEC, defaultKinesisOptions.dataQueueWaitTimeout.getSeconds.toString)
+      .option(CUSTOM_CREDENTIAL_PROVIDER_CLASS, customClassName)
+      .option(CUSTOM_CREDENTIAL_PROVIDER_PARAM, s"${stsRoleArnOpt.get},${stsSessionName}")
+
+    if (consumerType == EFO_CONSUMER_TYPE) {
+      reader.option(CONSUMER_NAME, defaultKinesisOptions.consumerName.get)
+    }
+
+    reader
+  }
+  
   def createCrossAccountSparkStsReadStream(consumerType: String,
                             utils: KinesisTestUtils): DataStreamReader = {
     val reader = spark
@@ -181,7 +205,12 @@ abstract class KinesisSourceCrossAccountItSuite(
    val reader = createCrossAccountSparkStsReadStream(consumerType, testUtils)
     runTestWithSparkRead(reader)
   }
-    
+  
+  testIfStsEnabled("Kinesis connector reads from another account using custom credentials provider") {
+    val reader = createCrossAccountSparkCustomReadStream(consumerType, testUtils)
+    runTestWithSparkRead(reader)
+  }
+  
   testIfAccessKeyEnabled("Kinesis connector reads from another account using access key") {
    val reader = createCrossAccountSparkReadStream(consumerType,
          awsAccessKeyIdOpt.get,

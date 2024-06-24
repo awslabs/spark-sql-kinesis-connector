@@ -67,6 +67,8 @@ class KinesisOptionsSuite extends KinesisTestBase {
     options.awsAccessKeyId shouldBe None
     options.awsSecretKey shouldBe None
     options.sessionToken shouldBe None
+    options.customCredentialsProviderClass shouldBe None
+    options.customCredentialsProviderParam shouldBe None
     options.kinesisRegion shouldBe TESTBASE_DEFAULT_REGION
   }
 
@@ -109,6 +111,8 @@ class KinesisOptionsSuite extends KinesisTestBase {
     options.awsAccessKeyId shouldBe None
     options.awsSecretKey shouldBe None
     options.sessionToken shouldBe None
+    options.customCredentialsProviderClass shouldBe None
+    options.customCredentialsProviderParam shouldBe None
     options.kinesisRegion shouldBe TESTBASE_DEFAULT_REGION
   }
   
@@ -125,7 +129,9 @@ class KinesisOptionsSuite extends KinesisTestBase {
     val testStsEndpointUrl = "nameTestStsEndpointUrl"
     val testAwsAccessKeyId = "nameTestAwsAccessKeyId"
     val testAwsSecretKey = "nameTestAwsSecretKey"
-    val testSessionToken = "nameTestSessionTokenn"
+    val testSessionToken = "nameTestSessionToken"
+    val testCredentialProviderClass = "customCredentialProviderClass"
+    val testCredentialProviderParam = "customCredentialProviderParam"
     val testDynamoDBTableName = "nameTestDynamoDBTableName"
 
     val params = Map(
@@ -155,6 +161,8 @@ class KinesisOptionsSuite extends KinesisTestBase {
       "kinesis.awsAccessKeyId" -> testAwsAccessKeyId,
       "kinesis.awsSecretKey" -> testAwsSecretKey,
       "kinesis.sessionToken" -> testSessionToken,
+      "kinesis.credentialProviderClass" -> testCredentialProviderClass,
+      "kinesis.credentialProviderParam" -> testCredentialProviderParam,
       "kinesis.kinesisRegion" -> testKafkaRegion,
       "kinesis.dynamodb.tableName" -> testDynamoDBTableName,
       "kinesis.subscribeToShard.timeoutSec" -> "10",
@@ -190,6 +198,8 @@ class KinesisOptionsSuite extends KinesisTestBase {
     options.awsAccessKeyId shouldBe Some(testAwsAccessKeyId)
     options.awsSecretKey shouldBe Some(testAwsSecretKey)
     options.sessionToken shouldBe Some(testSessionToken)
+    options.customCredentialsProviderClass shouldBe Some(testCredentialProviderClass)
+    options.customCredentialsProviderParam shouldBe Some(testCredentialProviderParam)
     options.kinesisRegion shouldBe testKafkaRegion
     options.dynamodbTableName shouldBe testDynamoDBTableName
     options.efoSubscribeToShardTimeout shouldBe Duration.ofSeconds(10)
