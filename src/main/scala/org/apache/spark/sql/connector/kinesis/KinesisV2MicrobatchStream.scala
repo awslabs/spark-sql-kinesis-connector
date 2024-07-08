@@ -199,7 +199,7 @@ class KinesisV2MicrobatchStream (
         shardsInfo.map(s => s.shardId -> s).toMap
       }
       else {
-        logInfo(s"getBatchShardsInfo for batchId $batchId doesn't exists")
+        logInfo(s"getBatchShardsInfo for new batchId $batchId")
         Map.empty
       }
 
