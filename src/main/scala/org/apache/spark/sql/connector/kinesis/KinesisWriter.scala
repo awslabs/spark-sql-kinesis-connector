@@ -26,6 +26,7 @@ object KinesisWriter extends Logging {
 
   val DATA_ATTRIBUTE_NAME: String = "data"
   val PARTITION_KEY_ATTRIBUTE_NAME: String = "partitionKey"
+  val EXPLICIT_HASH_KEY_ATTRIBUTE_NAME: String = "explicitHashKey"
 
   override def toString: String = "KinesisWriter"
 
