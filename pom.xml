@@ -139,7 +139,7 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>3.21.7</version>
+      <version>3.25.5</version>
       <!--
          We are being explicit about version here and overriding the
          spark default of 2.5.0 because KCL appears to have introduced
