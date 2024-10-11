@@ -60,6 +60,8 @@ case class KinesisOptions (
                             awsAccessKeyId: Option[String],
                             awsSecretKey: Option[String],
                             sessionToken: Option[String],
+                            customCredentialsProviderClass: Option[String],
+                            customCredentialsProviderParam: Option[String],
                             kinesisRegion: String,
                             proxyAddress: Option[String],
                             proxyPort: Option[String],
@@ -119,6 +121,9 @@ object KinesisOptions {
   val AWS_ACCESS_KEY_ID: String = PREFIX + "awsAccessKeyId"
   val AWS_SECRET_KEY: String = PREFIX + "awsSecretKey"
   val AWS_SESSION_TOKEN: String = PREFIX + "sessionToken"
+
+  val CUSTOM_CREDENTIAL_PROVIDER_CLASS: String = PREFIX + "credentialProviderClass"
+  val CUSTOM_CREDENTIAL_PROVIDER_PARAM: String = PREFIX + "credentialProviderParam"
   
   val KINESIS_REGION: String = PREFIX + "kinesisRegion"
 
@@ -315,6 +320,9 @@ object KinesisOptions {
       secret
     }
     val sessionToken: Option[String] = Option(parameters.get(AWS_SESSION_TOKEN))
+
+    val customCredentialsProviderClass: Option[String] = Option(parameters.get(CUSTOM_CREDENTIAL_PROVIDER_CLASS))
+    val customCredentialsProviderParam: Option[String] = Option(parameters.get(CUSTOM_CREDENTIAL_PROVIDER_PARAM))
     
     val kinesisRegion = parameterGetStringOrElse(parameters, KINESIS_REGION,
       getRegionNameByEndpoint(endpointUrl))
@@ -398,6 +406,8 @@ object KinesisOptions {
       awsAccessKeyId = awsAccessKeyId,
       awsSecretKey = awsSecretKey,
       sessionToken = sessionToken,
+      customCredentialsProviderClass = customCredentialsProviderClass,
+      customCredentialsProviderParam = customCredentialsProviderParam,
       kinesisRegion = kinesisRegion,
       proxyAddress = proxyAddress,
       proxyPort = proxyPort,

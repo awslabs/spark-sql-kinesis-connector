@@ -106,7 +106,13 @@ case class KinesisClientConsumerImpl(
   
   private val connectorAwsCredentialsProvider = {
     val builder = ConnectorAwsCredentialsProvider.builder
-    
+    builder.kinesisOptions(options)
+    if (options.customCredentialsProviderClass.isDefined) {
+      builder.customCredentials(
+        options.customCredentialsProviderClass.get,
+        options.customCredentialsProviderParam
+      )
+    }
     if (options.stsRoleArn.isDefined) {
       builder.stsCredentials(
         options.stsRoleArn,
