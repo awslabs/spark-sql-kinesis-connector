@@ -182,10 +182,10 @@ object KinesisOptions {
   val DEFAULT_SINK_AGGREGATION: String = "true"
 
   // proxy options
-  val PROXY_ADDRESS: String = "proxyAddress"
-  val PROXY_PORT: String = "proxyPort"
-  val PROXY_USERNAME: String = "proxyUsername"
-  val PROXY_PASSWORD: String = "proxyPassword"
+  val PROXY_ADDRESS: String = SINK_PREFIX + "proxyAddress"
+  val PROXY_PORT: String = SINK_PREFIX + "proxyPort"
+  val PROXY_USERNAME: String = SINK_PREFIX + "proxyUsername"
+  val PROXY_PASSWORD: String = SINK_PREFIX + "proxyPassword"
 
   def apply(parameters: CaseInsensitiveStringMap): KinesisOptions = {
 

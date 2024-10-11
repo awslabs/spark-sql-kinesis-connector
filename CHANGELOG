@@ -2,7 +2,9 @@ Changelog
 =========
 v1.4.0
 ----------------------------
-- plumb through optional recordTtl param to KPL
+- plumb through optional recordTtl param to KPL (issue #31)
+- Allow defining the ExplicitHashKey for a Kinesis Sink (issue #23)
+- Allow proxy configurations to be passed as option inputs for a sink (issue #21)
 
 v1.3.0
 ----------------------------

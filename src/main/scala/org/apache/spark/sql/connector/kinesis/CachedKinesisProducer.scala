@@ -71,7 +71,7 @@ object CachedKinesisProducer extends Logging {
       KinesisOptions.DEFAULT_SINK_RECORD_MAX_BUFFERED_TIME)
       .toLong
 
-    val recordTTL = kinesisParams.getOrElse(
+    val recordTTL = producerConfiguration.getOrElse(
       KinesisOptions.SINK_RECORD_TTL,
       KinesisOptions.DEFAULT_SINK_RECORD_TTL)
       .toLong
@@ -94,7 +94,7 @@ object CachedKinesisProducer extends Logging {
         com.amazonaws.auth.DefaultAWSCredentialsProviderChain.getInstance
       )
       .setRegion(region)
-      .setRecordTTL(recordTTL)
+      .setRecordTtl(recordTTL)
 
     // check for proxy settings
     if (producerConfiguration.contains(KinesisOptions.PROXY_ADDRESS.toLowerCase(Locale.ROOT))) {
