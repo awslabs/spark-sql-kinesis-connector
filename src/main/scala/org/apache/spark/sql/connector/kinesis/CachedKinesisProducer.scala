@@ -86,7 +86,7 @@ object CachedKinesisProducer extends Logging {
       KinesisOptions.DEFAULT_SINK_AGGREGATION)
       .toBoolean } getOrElse { KinesisOptions.DEFAULT_SINK_AGGREGATION.toBoolean}
 
-    val kinesisProducer = new Producer(new KinesisProducerConfiguration()
+    val kinesisProducerConfiguration = new KinesisProducerConfiguration()
       .setRecordMaxBufferedTime(recordMaxBufferedTime)
       .setMaxConnections(maxConnections)
       .setAggregationEnabled(aggregation)
@@ -95,7 +95,38 @@ object CachedKinesisProducer extends Logging {
       )
       .setRegion(region)
       .setRecordTTL(recordTTL)
-    )
+
+    // check for proxy settings
+    if (producerConfiguration.contains(KinesisOptions.PROXY_ADDRESS.toLowerCase(Locale.ROOT))) {
+      val proxyAddress = producerConfiguration.get(KinesisOptions.PROXY_ADDRESS.toLowerCase(Locale.ROOT))
+      if (proxyAddress.isDefined) {
+        kinesisProducerConfiguration.setProxyHost(proxyAddress.get)
+      }
+    }
+
+    if (producerConfiguration.contains(KinesisOptions.PROXY_PORT.toLowerCase(Locale.ROOT))) {
+      val proxyPort = producerConfiguration.get(KinesisOptions.PROXY_PORT.toLowerCase(Locale.ROOT))
+      if (proxyPort.isDefined) {
+        kinesisProducerConfiguration.setProxyPort(proxyPort.get.toLong)
+      }
+    }
+
+    if (producerConfiguration.contains(KinesisOptions.PROXY_USERNAME.toLowerCase(Locale.ROOT))) {
+      val proxyUsername = producerConfiguration.get(KinesisOptions.PROXY_USERNAME.toLowerCase(Locale.ROOT))
+      if (proxyUsername.isDefined) {
+        kinesisProducerConfiguration.setProxyUserName(proxyUsername.get)
+      }
+    }
+
+    if (producerConfiguration.contains(KinesisOptions.PROXY_PASSWORD.toLowerCase(Locale.ROOT))) {
+      val proxyPassword = producerConfiguration.get(KinesisOptions.PROXY_PASSWORD.toLowerCase(Locale.ROOT))
+      if (proxyPassword.isDefined) {
+        kinesisProducerConfiguration.setProxyPassword(proxyPassword.get)
+      }
+    }
+
+    val kinesisProducer = new Producer(kinesisProducerConfiguration)
+
     logDebug(s"Created a new instance of KinesisProducer for $producerConfiguration.")
     kinesisProducer
   }

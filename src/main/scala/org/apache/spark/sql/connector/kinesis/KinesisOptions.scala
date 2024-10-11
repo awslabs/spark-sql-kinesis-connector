@@ -63,6 +63,10 @@ case class KinesisOptions (
                             customCredentialsProviderClass: Option[String],
                             customCredentialsProviderParam: Option[String],
                             kinesisRegion: String,
+                            proxyAddress: Option[String],
+                            proxyPort: Option[String],
+                            proxyUsername: Option[String],
+                            proxyPassword: Option[String],
                             maxResultListShardsPerCall: Int = 1000,
                             waitTableActiveTimeoutSeconds: Int = 600,
                             waitTableActiveSecondsBetweenPolls: Int = 10,
@@ -176,6 +180,12 @@ object KinesisOptions {
   val DEFAULT_SINK_RECORD_MAX_BUFFERED_TIME: String = "1000"
   val DEFAULT_SINK_MAX_CONNECTIONS: String = "1"
   val DEFAULT_SINK_AGGREGATION: String = "true"
+
+  // proxy options
+  val PROXY_ADDRESS: String = "proxyAddress"
+  val PROXY_PORT: String = "proxyPort"
+  val PROXY_USERNAME: String = "proxyUsername"
+  val PROXY_PASSWORD: String = "proxyPassword"
 
   def apply(parameters: CaseInsensitiveStringMap): KinesisOptions = {
 
@@ -355,6 +365,12 @@ object KinesisOptions {
       MAINTENANCE_TASK_INTERVAL_SEC,
       DEFAULT_MAINTENANCE_TASK_INTERVAL_SEC)
 
+    // adding optionality for proxy configuration
+    val proxyAddress = Option(parameters.get(PROXY_ADDRESS))
+    val proxyPort = Option(parameters.get(PROXY_PORT))
+    val proxyUsername = Option(parameters.get(PROXY_USERNAME))
+    val proxyPassword = Option(parameters.get(PROXY_PASSWORD))
+
     new KinesisOptions(
       region = region,
       endpointUrl = endpointUrl,
@@ -394,7 +410,11 @@ object KinesisOptions {
       sessionToken = sessionToken,
       customCredentialsProviderClass = customCredentialsProviderClass,
       customCredentialsProviderParam = customCredentialsProviderParam,
-      kinesisRegion = kinesisRegion
+      kinesisRegion = kinesisRegion,
+      proxyAddress = proxyAddress,
+      proxyPort = proxyPort,
+      proxyUsername = proxyUsername,
+      proxyPassword = proxyPassword
     )
   }
 
