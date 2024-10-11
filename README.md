@@ -463,6 +463,7 @@ Note: Using permanent credentials are not recommended due to security concerns.
 | kinesis.sink.recordMaxBufferedTimeMs | 1000 (milliseconds)              | Specify the maximum buffered time of a record                |
 | kinesis.sink.maxConnections          | 1                                | Specify the maximum connections to Kinesis                   |
 | kinesis.sink.aggregationEnabled      | True                             | Specify if records should be aggregated before sending them to Kinesis |
+| kinesis.sink.recordTtl               | 30000 (milliseconds)             | Records not successfully written to Kinesis within this time are dropped |
 
 
 ## Security

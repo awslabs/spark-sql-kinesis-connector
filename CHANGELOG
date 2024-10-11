@@ -1,5 +1,9 @@
 Changelog
 =========
+v1.4.0
+----------------------------
+- plumb through optional recordTtl param to KPL
+
 v1.3.0
 ----------------------------
 - support custom connector credential provider
