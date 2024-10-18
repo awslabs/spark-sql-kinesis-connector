@@ -1,5 +1,10 @@
 Changelog
 =========
+v1.4.1
+----------------------------
+- fix bug in recordTtl casing (issue #35)
+
+
 v1.4.0
 ----------------------------
 - plumb through optional recordTtl param to KPL (issue #31)
