@@ -72,7 +72,7 @@ object CachedKinesisProducer extends Logging {
       .toLong
 
     val recordTTL = producerConfiguration.getOrElse(
-      KinesisOptions.SINK_RECORD_TTL,
+      KinesisOptions.SINK_RECORD_TTL.toLowerCase(Locale.ROOT),
       KinesisOptions.DEFAULT_SINK_RECORD_TTL)
       .toLong
 
