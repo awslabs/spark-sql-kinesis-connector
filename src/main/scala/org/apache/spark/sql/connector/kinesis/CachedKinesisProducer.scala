@@ -81,6 +81,21 @@ object CachedKinesisProducer extends Logging {
       KinesisOptions.DEFAULT_SINK_MAX_CONNECTIONS)
       .toInt
 
+    val rateLimit = producerConfiguration.getOrElse(
+      KinesisOptions.SINK_RATE_LIMIT.toLowerCase(Locale.ROOT),
+      KinesisOptions.DEFAULT_SINK_MAX_CONNECTIONS)
+      .toLong
+
+    val threadingModel = producerConfiguration.getOrElse(
+      KinesisOptions.SINK_THREADING_MODEL.toLowerCase(Locale.ROOT),
+      KinesisOptions.DEFAULT_SINK_THREADING_MODEL)
+      .toString
+
+    val threadPoolSize = producerConfiguration.getOrElse(
+      KinesisOptions.SINK_THREAD_POOL_SIZE.toLowerCase(Locale.ROOT),
+      KinesisOptions.DEFAULT_SINK_THREAD_POOL_SIZE)
+      .toInt
+
     val aggregation = Try { producerConfiguration.getOrElse(
       KinesisOptions.SINK_AGGREGATION_ENABLED.toLowerCase(Locale.ROOT),
       KinesisOptions.DEFAULT_SINK_AGGREGATION)
@@ -95,6 +110,9 @@ object CachedKinesisProducer extends Logging {
       )
       .setRegion(region)
       .setRecordTtl(recordTTL)
+      .setThread(threadingModel)
+      .setThreadPoolSize(threadPoolSize)
+      .setRateLimit(rateLimit)
 
     // check for proxy settings
     if (producerConfiguration.contains(KinesisOptions.PROXY_ADDRESS.toLowerCase(Locale.ROOT))) {

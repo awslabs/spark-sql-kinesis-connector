@@ -1,5 +1,10 @@
 Changelog
 =========
+v1.5.0
+----------------------------
+- plumb add threading pool, thread pool size, and rate limit param to KPL (issue #36)
+
+
 v1.4.1
 ----------------------------
 - fix bug in recordTtl casing (issue #35)

@@ -173,12 +173,18 @@ object KinesisOptions {
   val SINK_FLUSH_WAIT_TIME_MILLIS: String = SINK_PREFIX + "flushWaitTimeMs"
   val SINK_RECORD_MAX_BUFFERED_TIME: String = SINK_PREFIX + "recordMaxBufferedTimeMs"
   val SINK_MAX_CONNECTIONS: String = SINK_PREFIX + "maxConnections"
+  val SINK_RATE_LIMIT: String = SINK_PREFIX + "rateLimit"
+  val SINK_THREAD_POOL_SIZE: String = SINK_PREFIX + "threadPoolSize"
+  val SINK_THREADING_MODEL: String = SINK_PREFIX + "threadPool"
   val SINK_AGGREGATION_ENABLED: String = SINK_PREFIX + "aggregationEnabled"
 
   val DEFAULT_SINK_FLUSH_WAIT_TIME_MILLIS: String = "100"
   val DEFAULT_SINK_RECORD_TTL: String = "30000"
   val DEFAULT_SINK_RECORD_MAX_BUFFERED_TIME: String = "1000"
   val DEFAULT_SINK_MAX_CONNECTIONS: String = "1"
+  val DEFAULT_SINK_RATE_LIMIT: String = "150"
+  val DEFAULT_SINK_THREADING_MODEL: String = "PER_REQUEST"
+  val DEFAULT_SINK_THREAD_POOL_SIZE: String = "64"
   val DEFAULT_SINK_AGGREGATION: String = "true"
 
   // proxy options
