@@ -1,5 +1,9 @@
 Changelog
 =========
+v1.5.0
+----------------------------
+- plumb threading model, thread pool size, and rate limit param to KPL (issue #37)
+
 v1.4.0
 ----------------------------
 - plumb through optional recordTtl param to KPL (issue #31)
