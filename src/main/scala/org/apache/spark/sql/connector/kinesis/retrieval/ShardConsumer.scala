@@ -20,6 +20,7 @@ package org.apache.spark.sql.connector.kinesis.retrieval
 import scala.util.control.Breaks.break
 import scala.util.control.Breaks.breakable
 import org.apache.spark.internal.Logging
+import org.apache.spark.sql.connector.kinesis.metrics.ShardConsumerMetrics
 import org.apache.spark.sql.connector.kinesis.retrieval.RecordBatchPublisherRunStatus.CANCELLED
 import org.apache.spark.sql.connector.kinesis.retrieval.RecordBatchPublisherRunStatus.COMPLETE
 import org.apache.spark.sql.connector.kinesis.retrieval.SequenceNumber.SENTINEL_SHARD_ENDING_SEQUENCE_NUM
@@ -39,6 +40,7 @@ class ShardConsumer(
       val recordBatchPublisher: RecordBatchPublisher) extends Runnable with Logging{
 
   private var lastSequenceNum: SequenceNumber = SequenceNumber.toSequenceNumber(recordBatchPublisher.initialStartingPosition)
+  val consumerMetricsCollector: ShardConsumerMetrics = ShardConsumerMetrics()
   val streamShard = recordBatchPublisher.streamShard
 
   logInfo(s"ShardConsumer init on ${streamShard}, startingPosition: ${recordBatchPublisher.initialStartingPosition}")
@@ -54,7 +56,10 @@ class ShardConsumer(
                 s" batch size: ${batch.totalSizeInBytes}, " +
                 s"number of raw records ${batch.numberOfRawRecords}, " +
                 s"number of user records ${batch.numberOfDeaggregatedRecord}")
-
+              consumerMetricsCollector.batchCounter.inc()
+              consumerMetricsCollector.rawRecordsCounter.inc(batch.numberOfRawRecords)
+              consumerMetricsCollector.userRecordsCounter.inc(batch.numberOfDeaggregatedRecord)
+              
               batch.userRecords.foreach { userRecord =>
                 if (filterDeaggregatedRecord(userRecord)) {
                   enqueueRecord(userRecord)

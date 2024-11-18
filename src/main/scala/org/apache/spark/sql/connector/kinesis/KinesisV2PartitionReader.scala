@@ -35,6 +35,7 @@ import org.apache.spark.sql.connector.kinesis.client.KinesisClientConsumer
 import org.apache.spark.sql.connector.kinesis.client.KinesisClientFactory
 import org.apache.spark.sql.connector.kinesis.metadata.MetadataCommitter
 import org.apache.spark.sql.connector.kinesis.metadata.MetadataCommitterFactory
+import org.apache.spark.sql.connector.kinesis.metrics.PartitionReaderMetrics
 import org.apache.spark.sql.connector.kinesis.retrieval.DataReceiver
 import org.apache.spark.sql.connector.kinesis.retrieval.KinesisUserRecord
 import org.apache.spark.sql.connector.kinesis.retrieval.RecordBatchPublisher
@@ -47,6 +48,10 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.util.NextIterator
 import org.apache.spark.util.SerializableConfiguration
+
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 class KinesisV2PartitionReader (schema: StructType,
                                 sourcePartition: KinesisV2InputPartition,
@@ -67,6 +72,7 @@ class KinesisV2PartitionReader (schema: StructType,
   
   private val kinesisShardId = sourcePartition.startShardInfo.shardId
   private val startTimestamp: Long = System.currentTimeMillis
+  private val metricsCollector = PartitionReaderMetrics()
   
   val kinesisStreamShard: StreamShard = StreamShard(streamName, Shard.builder().shardId(kinesisShardId).build())
   val kinesisPosition: KinesisPosition = KinesisPosition.make(sourcePartition.startShardInfo.iteratorType,
@@ -148,12 +154,15 @@ class KinesisV2PartitionReader (schema: StructType,
     val putResult = dataQueue.offer(record, dataQueueWaitTimeout.getSeconds, TimeUnit.SECONDS)
 
     if (putResult) {
+      metricsCollector.enqueueRecordCounter.inc()
       if (KinesisUserRecord.nonEmptyUserRecord(record)) {
         updateState(streamShard, record.sequenceNumber)
       } else {
+        metricsCollector.enqueueEmptyRecordCounter.inc()
         logDebug(s"put empty record with millisBehindLatest ${record.millisBehindLatest} to ${streamShard}'s data queue'")
       }
     } else {
+      metricsCollector.enqueueFailureCounter.inc()
       logWarning(s"fail to enqueue record for ${streamShard}")
     }
 
@@ -210,11 +219,12 @@ class KinesisV2PartitionReader (schema: StructType,
           }
         } else if (KinesisUserRecord.shardEndUserRecord(userRecord)) {
           logInfo(s"Got shard end user record for ${kinesisStreamShard}")
+          metricsCollector.shardEndUserRecordCounter.inc()
           hasShardClosed.set(true)
           fetchNext = false
         } else if (KinesisUserRecord.emptyUserRecord(userRecord)) {
           logInfo(s"Got empty user record with millisBehindLatest ${userRecord.millisBehindLatest} for ${kinesisPosition}")
-
+          metricsCollector.emptyUserRecordCounter.inc()
           if (userRecord.millisBehindLatest > 0) {
             // when the stream not receiving new data for a long time, there can be real data events
             // after the empty ones, reset the counter
@@ -223,6 +233,7 @@ class KinesisV2PartitionReader (schema: StructType,
           }
 
         } else {
+          metricsCollector.userRecordCounter.inc()
           if (userRecord.data.length > 0) {
             lastEmptyCnt = 0
             emptyCnt = 0
@@ -250,6 +261,7 @@ class KinesisV2PartitionReader (schema: StructType,
           }
           else {
             logError(s"Got userRecord with zero data length ${userRecord}. Not supposed to reach here.")
+            metricsCollector.zeroLengthUserRecordCounter.inc()
             fetchNext = false
           }
         }
@@ -315,9 +327,30 @@ class KinesisV2PartitionReader (schema: StructType,
     underlying.next()
   }
 
+  private def logMetrics(): Unit = {
+    Try(metricsCollector.json) match {
+      case Success(metricsString) =>
+        logInfo(s"Partition Reader log metrics for ${kinesisStreamShard}: ${metricsString}")
+      case Failure(e) =>
+        logError("failed to get Partition Reader metrics for ${kinesisStreamShard}", e)
+    }
+
+    Try(shardConsumer.consumerMetricsCollector.json) match {
+      case Success(metricsString) =>
+        logInfo(s"Shard Consumer log metrics for ${kinesisStreamShard}: ${metricsString}")
+      case Failure(e) =>
+        logError("failed to get Shard Consumer metrics for ${kinesisStreamShard}", e)
+    }
+    
+  }
+  
   override def close(): Unit = {
     logInfo(s"Start to close ${sourcePartition.startShardInfo}  current value of closed=${closed}")
     if(closed.compareAndSet(false, true)) {
+
+      logMetrics()
+      logInfo(s"dataQueue size before clear ${dataQueue.size()}")
+      
       // clear the queue to unblock enqueue operations
       dataQueue.clear()
 

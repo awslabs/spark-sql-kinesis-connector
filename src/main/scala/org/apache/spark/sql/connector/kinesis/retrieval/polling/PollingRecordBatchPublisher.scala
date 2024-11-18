@@ -104,7 +104,8 @@ class PollingRecordBatchPublisher(
       }
       catch {
         case eiEx: ExpiredIteratorException =>
-          logError(s"Encountered an unexpected expired iterator ${nextShardItr} for shard ${streamShard}. refreshing the iterator ...", eiEx)
+          logWarning(s"Encountered an expired iterator ${nextShardItr} for shard ${streamShard}." +
+            s" refreshing the iterator ...", eiEx)
           nextShardItr = getShardIterator
           // sleep for the fetch interval before the next getRecords attempt with the
           // refreshed iterator

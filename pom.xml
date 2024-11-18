@@ -20,7 +20,7 @@
 
   <groupId>org.apache.spark</groupId>
   <artifactId>spark-streaming-sql-kinesis-connector_2.12</artifactId>
-  <version>1.4.0</version>
+  <version>1.5.0-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>Spark Structured Streaming Kinesis Connector</name>
   <description>Connector to read from and write into Kinesis from Structured Streaming Applications</description>
@@ -34,6 +34,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <aws.sdkv2.version>2.23.9</aws.sdkv2.version>
     <aws.kpl.version>0.15.8</aws.kpl.version>
+    <metrics.version>4.2.15</metrics.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
@@ -202,7 +203,12 @@
       <version>2.19.0</version>
       <scope>test</scope>
     </dependency>
-    
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+      <version>${metrics.version}</version>
+    </dependency>
+  
     <!--
       This spark-tags test-dep is needed even though it isn't used in this module, otherwise testing-cmds that exclude
       them will yield errors.
