@@ -409,8 +409,9 @@ It's also possible to access cross account Kinesis data stream using user's AWS 
 Note: Using permanent credentials are not recommended due to security concerns.
 
 ## Known Limitations
-* Speculative execution is not supported
+* Speculative execution is not supported.
 * Trigger.AvailableNow is not supported.
+* [Continuous Processing](https://spark.apache.org/docs/3.5.1/structured-streaming-programming-guide.html#continuous-processing) is not supported.
 
 ## Kinesis Source Configuration
 
