@@ -263,10 +263,10 @@ class EfoShardSubscriber(val consumerArn: String,
           break
         } else {
           if (subscriptionEvent.get.isSubscribeToShardEvent) { // Request for KDS to send the next record batch
-            logTrace(s"EfoShardSubscriber isSubscribeToShardEvent - ${consumerArn}::${streamShard}")
             subscription.requestRecord()
             val event: SubscribeToShardEvent = subscriptionEvent.get.getSubscribeToShardEvent
             continuationSequenceNumber = event.continuationSequenceNumber
+            logTrace(s"EfoShardSubscriber isSubscribeToShardEvent - ${consumerArn}::${streamShard} - ${continuationSequenceNumber}")
             eventConsumer.accept(event)
           } else {
             if (subscriptionEvent.get.isSubscriptionComplete) {

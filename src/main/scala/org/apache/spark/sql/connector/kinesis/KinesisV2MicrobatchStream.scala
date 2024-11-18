@@ -264,8 +264,8 @@ class KinesisV2MicrobatchStream (
     ) {
       currentShardOffsets = Some(
         new ShardOffsets(prevBatchId + 1, options.streamName,
-                latestShardInfo.filter(_.iteratorType != ShardEnd.iteratorType)
-      ))
+                latestShardInfo.filter(_.iteratorType != ShardEnd.iteratorType))
+      )
     } else {
       logInfo(s"Offsets are unchanged since ${KinesisOptions.AVOID_EMPTY_BATCHES} is enabled")
     }
