@@ -465,6 +465,9 @@ Note: Using permanent credentials are not recommended due to security concerns.
 | kinesis.sink.maxConnections          | 1                                | Specify the maximum connections to Kinesis                   |
 | kinesis.sink.aggregationEnabled      | True                             | Specify if records should be aggregated before sending them to Kinesis |
 | kinesis.sink.recordTtl               | 30000 (milliseconds)             | Records not successfully written to Kinesis within this time are dropped |
+| kinesis.sink.rateLimit               | 150   (percent)                  | Limits the maximum allowed put rate for a shard per executor, as a percentage of the Kinesis shard limits. |
+| kinesis.sink.threadingModel          | PER_REQUSET                      | Specify whether the KPL will create new threads per request (PER_REQUEST) or use a pool (POOLED) when invoking Kinesis |
+| kinesis.sink.threadPoolSize          | 64                               | If using a thread pool (above), maximum number of threads |
 
 
 ## Security
