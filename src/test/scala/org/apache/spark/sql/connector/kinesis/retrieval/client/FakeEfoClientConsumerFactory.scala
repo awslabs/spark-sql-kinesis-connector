@@ -274,7 +274,7 @@ object FakeEfoClientConsumerFactory {
 
         batchIndex += 1
       }
-      events
+      events.toSeq
     }
   }
 

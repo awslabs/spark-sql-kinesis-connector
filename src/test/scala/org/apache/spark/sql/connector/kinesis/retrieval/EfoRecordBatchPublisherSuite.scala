@@ -339,7 +339,7 @@ class EfoRecordBatchPublisherSuite extends KinesisTestBase {
     events += createSubscribeToShardEvent(record)
     events += createSubscribeToShardEvent(record)
 
-    val kinesisClient = singleShardWithEvents(events)
+    val kinesisClient = singleShardWithEvents(events.toSeq)
     val now: Date = new Date
 
     val hashKeyRange: HashKeyRange = HashKeyRange.builder()
@@ -395,7 +395,7 @@ class EfoRecordBatchPublisherSuite extends KinesisTestBase {
     events += createSubscribeToShardEvent(record)
     events += createSubscribeToShardEvent(record)
 
-    val kinesisClient = singleShardWithEvents(events)
+    val kinesisClient = singleShardWithEvents(events.toSeq)
     val now: Date = new Date
 
     // Create ShardHandle with HashKeyRange excluding single UserRecord with hash key 0
@@ -755,7 +755,7 @@ class EfoRecordBatchPublisherSuite extends KinesisTestBase {
   }
 
   private def flattenToUserRecords(recordBatch: util.List[RecordBatch]): Seq[KinesisUserRecord] = {
-    recordBatch.asScala.flatMap(_.userRecords)
+    recordBatch.asScala.flatMap(_.userRecords).toSeq
   }
 
 

@@ -265,7 +265,7 @@ case class KinesisClientConsumerImpl(
   override def getShards: Seq[Shard] = {
     val shards = listShards
     logDebug(s"List shards in Kinesis Stream:  ${shards}")
-    shards
+    shards.toSeq
   }
 
   override def close(): Unit = synchronized {

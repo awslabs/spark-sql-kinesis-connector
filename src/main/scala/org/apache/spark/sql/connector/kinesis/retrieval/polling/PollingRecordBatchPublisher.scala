@@ -79,7 +79,7 @@ class PollingRecordBatchPublisher(
     if (nextShardItr == null) return COMPLETE
     
     val result = getRecords(nextShardItr, maxNumberOfRecords)
-    val recordBatch = RecordBatch(result.records().asScala, streamShard, result.millisBehindLatest)
+    val recordBatch = RecordBatch(result.records().asScala.toSeq, streamShard, result.millisBehindLatest)
     val latestSequenceNumber = consumer.accept(recordBatch)
     nextStartingPosition = getNextStartingPosition(latestSequenceNumber, nextStartingPosition)
     nextShardItr = result.nextShardIterator
