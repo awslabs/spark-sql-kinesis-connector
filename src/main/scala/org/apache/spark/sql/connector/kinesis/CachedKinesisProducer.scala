@@ -19,7 +19,7 @@ package org.apache.spark.sql.connector.kinesis
 import java.util.Locale
 import java.util.concurrent.{ExecutionException, TimeUnit}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 import com.amazonaws.services.kinesis.producer.{KinesisProducer, KinesisProducerConfiguration}
@@ -77,8 +77,8 @@ object CachedKinesisProducer extends Logging {
       .toLong
 
     val maxConnections = producerConfiguration.getOrElse(
-      KinesisOptions.SINK_MAX_CONNECTIONS.toLowerCase(Locale.ROOT),
-      KinesisOptions.DEFAULT_SINK_MAX_CONNECTIONS)
+        KinesisOptions.SINK_MAX_CONNECTIONS.toLowerCase(Locale.ROOT),
+        KinesisOptions.DEFAULT_SINK_MAX_CONNECTIONS)
       .toInt
 
     val aggregation = Try { producerConfiguration.getOrElse(
@@ -95,6 +95,38 @@ object CachedKinesisProducer extends Logging {
       )
       .setRegion(region)
       .setRecordTtl(recordTTL)
+
+    // set endpoint url if provided
+    if (producerConfiguration.contains(KinesisOptions.ENDPOINT_URL.toLowerCase(Locale.ROOT))) {
+      val endpointUrlOpt = producerConfiguration.get(KinesisOptions.ENDPOINT_URL.toLowerCase(Locale.ROOT))
+
+      endpointUrlOpt.foreach { endpointUrl =>
+        Try {
+          val uri = java.net.URI.create(endpointUrl)
+          val host = uri.getHost
+          val port = uri.getPort
+          val isLocalhost = host == "localhost" || host == "127.0.0.1" || host == "::1"
+
+          kinesisProducerConfiguration
+            .setKinesisEndpoint(host)
+            .setCloudwatchEndpoint(host)
+            .setStsEndpoint(host)
+            .setVerifyCertificate(!isLocalhost)
+
+          if (port != -1) {
+            kinesisProducerConfiguration
+              .setKinesisPort(port)
+              .setCloudwatchPort(port)
+              .setStsPort(port)
+          }
+        } match {
+          case Success(_) =>
+            logDebug(s"Successfully configured endpoint URL: $endpointUrl")
+          case Failure(e) =>
+            logWarning(s"Invalid endpoint URL: $endpointUrl - ${e.getMessage}", e)
+        }
+      }
+    }
 
     // check for proxy settings
     if (producerConfiguration.contains(KinesisOptions.PROXY_ADDRESS.toLowerCase(Locale.ROOT))) {
