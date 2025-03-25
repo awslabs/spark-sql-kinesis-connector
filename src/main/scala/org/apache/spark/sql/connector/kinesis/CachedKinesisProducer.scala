@@ -77,8 +77,8 @@ object CachedKinesisProducer extends Logging {
       .toLong
 
     val maxConnections = producerConfiguration.getOrElse(
-        KinesisOptions.SINK_MAX_CONNECTIONS.toLowerCase(Locale.ROOT),
-        KinesisOptions.DEFAULT_SINK_MAX_CONNECTIONS)
+      KinesisOptions.SINK_MAX_CONNECTIONS.toLowerCase(Locale.ROOT),
+      KinesisOptions.DEFAULT_SINK_MAX_CONNECTIONS)
       .toInt
 
     val aggregation = Try { producerConfiguration.getOrElse(
