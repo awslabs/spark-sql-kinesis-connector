@@ -20,7 +20,6 @@ import org.mockito.Mockito.spy
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
-
 import org.apache.spark.sql.connector.kinesis.AfterSequenceNumber
 import org.apache.spark.sql.connector.kinesis.KinesisPosition
 import org.apache.spark.sql.connector.kinesis.KinesisPosition.NO_SUB_SEQUENCE_NUMBER
@@ -128,7 +127,7 @@ class PollingRecordBatchPublisherSuite extends KinesisTestBase {
   }
 
   test("recover from ExpiredIteratorException") {
-    val kinesisClient = spy(
+    val kinesisClient = spy[KinesisClientConsumer](
       totalNumOfRecordsAfterNumOfGetRecordsCallsWithUnexpectedExpiredIterator(3, 2, 1, 500)
     )
     val publisher = createPollingRecordPublisher(kinesisClient,
