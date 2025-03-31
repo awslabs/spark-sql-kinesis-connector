@@ -232,10 +232,10 @@ object FakePollingClientConsumerFactory {
   }
 
 
-  private class SingleShardEmittingFixNumOfRecordsWithExpiredIteratorKinesis(numOfRecords: Int,
-                                                                             numOfGetRecordsCalls: Int,
-                                                                             orderOfCallToExpire: Int,
-                                                                             millisBehindLatest: Long)
+  class SingleShardEmittingFixNumOfRecordsWithExpiredIteratorKinesis(numOfRecords: Int,
+                                                                     numOfGetRecordsCalls: Int,
+                                                                     orderOfCallToExpire: Int,
+                                                                     millisBehindLatest: Long)
     extends SingleShardEmittingFixNumOfRecordsKinesis(numOfRecords, numOfGetRecordsCalls, millisBehindLatest) {
 
     assert(orderOfCallToExpire <= numOfGetRecordsCalls)
