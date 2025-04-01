@@ -126,6 +126,12 @@
       <artifactId>hadoop-aws</artifactId>
       <version>3.4.1</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>software.amazon.awssdk</groupId>
+          <artifactId>bundle</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 <!--    <dependency>-->
 <!--      <groupId>com.amazonaws</groupId>-->
@@ -414,6 +420,8 @@
                     <include>software.amazon.awssdk:profiles:*</include>
                     <include>software.amazon.awssdk:protocol-core:*</include>
                     <include>software.amazon.awssdk:regions:*</include>
+                    <include>software.amazon.awssdk:retries:*</include>
+                    <include>software.amazon.awssdk:retries-spi:*</include>
                     <include>software.amazon.awssdk:third-party-jackson-core:*</include>
                     <include>software.amazon.awssdk:third-party-jackson-dataformat-cbor:*</include>
                     <include>io.dropwizard.metrics:metrics-core:*</include>
