@@ -113,10 +113,22 @@ class KinesisV2MicrobatchStream (
       shardInfo.iteratorType,
       shardInfo.iteratorPosition)
 
-    val records = kinesisClient.getKinesisRecords(shardIterator, 1)
-    val recordsSize = records.records.size()
-    val millisBehindLatest = records.millisBehindLatest.longValue()
-    logDebug(s"hasNewData recordsSize ${recordsSize}, millisBehindLatest ${millisBehindLatest}")
+    def getRecordsResponseInfo(shardIterator: String): (Int, Long, String) = {
+      val records = kinesisClient.getKinesisRecords(shardIterator, 1)
+      val recordsSize = records.records.size()
+      val millisBehindLatest = records.millisBehindLatest.longValue()
+      logDebug(s"hasNewData recordsSize ${recordsSize}, millisBehindLatest ${millisBehindLatest}")
+      (recordsSize, millisBehindLatest, records.nextShardIterator)
+    }
+    var (recordsSize, millisBehindLatest, nextShardIterator) = getRecordsResponseInfo(shardIterator)
+    while (recordsSize == 0 && millisBehindLatest > 0 && nextShardIterator != null) {
+      logDebug(s"hasNewData using iterator ${nextShardIterator} to catch up")
+      val (recordsSizeCatchUp, millisBehindLatestCatchUp, nextShardIteratorCatchUp) =
+        getRecordsResponseInfo(nextShardIterator)
+      recordsSize = recordsSizeCatchUp
+      millisBehindLatest = millisBehindLatestCatchUp
+      nextShardIterator = nextShardIteratorCatchUp
+    }
     // Return true if we can get back a record. Or if we have not reached the end of the stream
     val result = (recordsSize > 0 || millisBehindLatest > 0)
     logInfo(s"hasNewData result ${result} for shardId ${shardInfo.shardId}")
