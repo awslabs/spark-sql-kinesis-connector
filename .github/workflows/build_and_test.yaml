@@ -43,6 +43,7 @@ jobs:
       - name: Test
         run: mvn -B test
       - name: Submit Dependency Snapshot
+        if: github.event_name == 'push'
         uses: advanced-security/maven-dependency-submission-action@v4
         with:
           correlator: ${{ github.job }}-${{ matrix.java }}
