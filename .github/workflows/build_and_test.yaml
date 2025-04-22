@@ -26,8 +26,7 @@ jobs:
     strategy:
       matrix:
         java:
-          # Re-enable Java 8 testing once EfoRecordBatchPublisherSuite is fixed: #55
-          #- '8'
+          - '8'
           - '11'
           - '17'
     steps:
