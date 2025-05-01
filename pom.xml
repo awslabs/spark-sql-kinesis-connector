@@ -100,6 +100,10 @@
       <scope>provided</scope>
       <exclusions>
         <exclusion>
+          <groupId>org.apache.zookeeper</groupId>
+          <artifactId>zookeeper</artifactId>
+        </exclusion>
+        <exclusion>
           <groupId>org.apache.ivy</groupId>
           <artifactId>ivy</artifactId>
         </exclusion>
@@ -118,6 +122,10 @@
       <type>test-jar</type>
       <scope>test</scope>
       <exclusions>
+        <exclusion>
+          <groupId>org.apache.zookeeper</groupId>
+          <artifactId>zookeeper</artifactId>
+        </exclusion>
         <exclusion>
           <groupId>org.apache.ivy</groupId>
           <artifactId>ivy</artifactId>
@@ -138,6 +146,10 @@
       <type>test-jar</type>
       <scope>test</scope>
       <exclusions>
+        <exclusion>
+          <groupId>org.apache.zookeeper</groupId>
+          <artifactId>zookeeper</artifactId>
+        </exclusion>
         <exclusion>
           <groupId>org.apache.ivy</groupId>
           <artifactId>ivy</artifactId>
