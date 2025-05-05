@@ -48,6 +48,54 @@ class ShardSyncerSuite extends KinesisTestBase  {
     assert(latest.head.iteratorType === new TrimHorizon().iteratorType )
   }
 
+  test("Should handle a mix of open and closed shards") {
+    val closedShard = Shard.builder()
+      .shardId("shard1")
+      .sequenceNumberRange(
+        SequenceNumberRange.builder()
+          .startingSequenceNumber("1")
+          .endingSequenceNumber("100")
+          .build
+      )
+      .build
+
+    val openShard = Shard.builder()
+      .shardId("shard2")
+      .sequenceNumberRange(
+        SequenceNumberRange.builder()
+          .startingSequenceNumber("101")
+          .build
+      )
+      .build
+
+
+    val mixedShards = Seq(closedShard, openShard)
+
+    val result = ShardSyncer.getLatestShardInfo(
+      mixedShards,
+      prevShardInfo,
+      InitialKinesisPosition.fromPredefPosition(new TrimHorizon)
+    )
+
+    assert(result.length === 2)
+    assert(result.map(_.shardId).toSet === Set("shard1", "shard2"))
+
+    // Test open shard (shard2) properties
+    val openShardInfo = result.find(_.shardId == "shard2").get
+    assert(openShardInfo.shardId === "shard2")
+    assert(openShardInfo.iteratorType === new TrimHorizon().iteratorType)
+    assert(openShardInfo.subSequenceNumber === NO_SUB_SEQUENCE_NUMBER)
+    assert(openShardInfo.isLast)
+
+
+    // Test closed shard (shard1) properties
+    val closedShardInfo = result.find(_.shardId == "shard1").get
+    assert(closedShardInfo.shardId === "shard1")
+    assert(closedShardInfo.iteratorType === new ShardEnd().iteratorType)
+    assert(closedShardInfo.subSequenceNumber === NO_SUB_SEQUENCE_NUMBER)
+    assert(closedShardInfo.isLast) // Should be last because it's a closed shard
+  }
+
   private def createShard(shardId: String, seqNum: String): Shard = {
     Shard.builder()
       .shardId(shardId)

@@ -263,6 +263,19 @@ object ShardSyncer extends Logging {
             new ShardInfo(shardId, initialPosition.shardPosition(shardId)))
         }
     }
+
+    closedShards(latestShards).foreach {
+      shardId: String =>
+        if (prevShardsList.contains(shardId)) {
+          logDebug(s"Closed shardId ${shardId} already exists")
+        } else {
+          AddShardInfoForAncestors(shardId,
+            latestShards, initialPosition, prevShardsList, newShardsInfoMap, memoizationContext)
+          // Mark closed shards with ShardEnd iterator type to indicate they should not be processed further
+          newShardsInfoMap.put(shardId, new ShardInfo(shardId, new ShardEnd()))
+        }
+    }
+
     logDebug(s"getLatestShardInfo filteredPrevShardsInfo ${filteredPrevShardsInfo}")
     logDebug(s"getLatestShardInfo newShardsInfoMap ${newShardsInfoMap}")
     filteredPrevShardsInfo ++ newShardsInfoMap.values.toSeq
