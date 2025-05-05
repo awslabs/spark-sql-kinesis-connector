@@ -84,6 +84,11 @@
 
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
+      <artifactId>sso</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
       <artifactId>apache-client</artifactId>
       <exclusions>
         <exclusion>
@@ -428,6 +433,7 @@
                     <include>com.amazonaws:aws-java-sdk-core:*</include>
                     <include>software.amazon.glue:schema-registry-serde:*</include>
                     <include>software.amazon.awssdk:sts:*</include>
+                    <include>software.amazon.awssdk:sso:*</include>
                     <include>software.amazon.awssdk:kinesis:*</include>
                     <include>software.amazon.awssdk:dynamodb:*</include>
                     <include>software.amazon.awssdk:sdk-core:*</include>
