@@ -142,28 +142,25 @@ object ShardSyncer extends Logging {
   }
 
   /*
-   *  Takes a sequence of Shard as input params
-   *  It iterate though each shards
-   *  and return a sequence of shard-ids of open Shards
+   *  Takes a Shard as input param.
+   *  It determines if the given shard is open.
    */
-  def openShards(shards: Seq[Shard]): Seq[String] = {
-    // List of open Shards
-    shards.collect {
-      case s: Shard if (s.sequenceNumberRange.endingSequenceNumber == null) => s.shardId
+  def isOpenShard(shard: Shard): Boolean = {
+    if (shard.sequenceNumberRange.endingSequenceNumber == null) {
+      return true
     }
+    false
   }
 
   /*
-   *  Takes a sequence of Shard as input params
-   *  It iterate though each shards
-   *  and return a sequence of shard-ids of closed Shards
+   *  Takes a Shard as input param.
+   *  It determines if the given shard is closed.
    */
-
-  def closedShards(shards: Seq[Shard]): Seq[String] = {
-    // List of closed Shards
-    shards.collect {
-      case s: Shard if (s.sequenceNumberRange.endingSequenceNumber != null) => s.shardId
+  def isClosedShard(shard: Shard): Boolean = {
+    if (shard.sequenceNumberRange.endingSequenceNumber != null) {
+      return true
     }
+    false
   }
 
   def hasNewShards(prevShardsInfo: Seq[ShardInfo],
@@ -246,34 +243,39 @@ object ShardSyncer extends Logging {
     }
 
     // filter the deleted shards
-    val filteredPrevShardsInfo = prevShardsInfo.filter {
+    var filteredPrevShardsInfo = prevShardsInfo.filter {
       s: ShardInfo => !deletedShardsList.contains(s.shardId)
     }
 
-    // check for new shards and fetch ShardInfo for them
-    openShards(latestShards).foreach {
-      shardId: String =>
-        if (prevShardsList.contains(shardId)) {
-          logDebug("Info for shardId " + shardId + " already exists")
-        }
-        else {
-          AddShardInfoForAncestors(shardId,
-            latestShards, initialPosition, prevShardsList, newShardsInfoMap, memoizationContext)
-          newShardsInfoMap.put(shardId,
-            new ShardInfo(shardId, initialPosition.shardPosition(shardId)))
-        }
-    }
+    latestShards.foreach {
+      shard: Shard => {
+        val shardId = shard.shardId()
 
-    closedShards(latestShards).foreach {
-      shardId: String =>
-        if (prevShardsList.contains(shardId)) {
-          logDebug(s"Closed shardId ${shardId} already exists")
-        } else {
-          AddShardInfoForAncestors(shardId,
-            latestShards, initialPosition, prevShardsList, newShardsInfoMap, memoizationContext)
-          // Mark closed shards with ShardEnd iterator type to indicate they should not be processed further
-          newShardsInfoMap.put(shardId, new ShardInfo(shardId, new ShardEnd()))
+        if (isOpenShard(shard)) {
+          if (prevShardsList.contains(shardId)) {
+            logDebug("Info for shardId " + shardId + " already exists")
+          } else {
+            AddShardInfoForAncestors(shardId,
+              latestShards, initialPosition, prevShardsList, newShardsInfoMap, memoizationContext)
+            newShardsInfoMap.put(shardId,
+              new ShardInfo(shardId, initialPosition.shardPosition(shardId)))
+          }
+        } else if (isClosedShard(shard)) {
+          if (prevShardsList.contains(shardId)) {
+            val updatedShardInfo = new ShardInfo(shardId, new ShardEnd())
+
+            // Replace the old shard info with the new one
+            filteredPrevShardsInfo = filteredPrevShardsInfo.map {
+              case shardInfo if shardInfo.shardId == shardId => updatedShardInfo
+              case shardInfo => shardInfo
+            }
+          } else {
+            AddShardInfoForAncestors(shardId,
+              latestShards, initialPosition, prevShardsList, newShardsInfoMap, memoizationContext)
+            newShardsInfoMap.put(shardId, new ShardInfo(shardId, new ShardEnd()))
+          }
         }
+      }
     }
 
     logDebug(s"getLatestShardInfo filteredPrevShardsInfo ${filteredPrevShardsInfo}")
