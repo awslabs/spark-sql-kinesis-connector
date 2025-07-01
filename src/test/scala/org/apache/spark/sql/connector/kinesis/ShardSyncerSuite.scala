@@ -86,10 +86,10 @@ class ShardSyncerSuite extends KinesisTestBase  {
       .build
 
 
-    val mixedShards = Seq(closedShard1, closedShard2, openShard)
+    val latestShards = Seq(closedShard1, closedShard2, openShard)
 
     val result = ShardSyncer.getLatestShardInfo(
-      mixedShards,
+      latestShards,
       prevShardInfo,
       InitialKinesisPosition.fromPredefPosition(new TrimHorizon)
     )
