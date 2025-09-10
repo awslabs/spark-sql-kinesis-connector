@@ -801,8 +801,8 @@ abstract class KinesisSourceItSuite(aggregateTestData: Boolean,
       assert(kinesis.schema == KinesisClientFactory.kinesisSchema)
 
       val result = kinesis.selectExpr("CAST(data AS STRING)", "streamName",
-        "partitionKey", "sequenceNumber", "CAST(approximateArrivalTimestamp AS TIMESTAMP)")
-        .as[(String, String, String, String, Long)]
+        "partitionKey", "sequenceNumber", "CAST(approximateArrivalTimestamp AS TIMESTAMP)", "shardId")
+        .as[(String, String, String, String, Long, String)]
 
       val query = result.writeStream
         .format("memory")
@@ -823,6 +823,7 @@ abstract class KinesisSourceItSuite(aggregateTestData: Boolean,
 
       assert(row.getAs[String]("streamName") === localTestUtils.streamName, s"Unexpected results: $row")
       assert(row.getAs[String]("partitionKey") === "1", s"Unexpected results: $row")
+      assert(localTestUtils.getShards.map(_.getShardId).contains(row.getAs[String]("shardId")), s"Unexpected results: $row")
       query.stop()
     } finally {
       localTestUtils.deleteStream()
