@@ -78,7 +78,7 @@ abstract class KinesisSourceCrossAccountItSuite(
     .region(Region.of(crossAccountRegion.get))
     .build()
 
-  def pushDataToKinesis(data: Array[String]): Map[String, Seq[(String, String)]] = {
+  def pushDataToKinesis(data: Array[String]): Map[String, ArrayBuffer[(String, String)]] = {
     val shardIdToSeqNumbers =
       new mutable.HashMap[String, ArrayBuffer[(String, String)]]()
     data.foreach { entry =>

@@ -157,7 +157,7 @@ object FakePollingClientConsumerFactory {
     }
 
     override def getShards: Seq[Shard] = {
-        dummyShards.map(_.shard)
+        dummyShards.map(_.shard).toSeq
       }
 
     override def getShardIterator(shardId: String,
@@ -180,7 +180,7 @@ object FakePollingClientConsumerFactory {
           .sequenceNumber(i.toString)
           .build
       }
-      batch
+      batch.toSeq
     }
   }
 
@@ -315,7 +315,7 @@ object FakePollingClientConsumerFactory {
                 .sequenceNumber(sequenceNumber.getAndAdd(numOfChildRecords).toString)
                 .build
       }
-      recordBatch
+      recordBatch.toSeq
     }
 
   }
@@ -418,7 +418,7 @@ object FakePollingClientConsumerFactory {
     }
 
     GetRecordsResponse.builder()
-      .records(records: _*)
+      .records(records.toSeq: _*)
       .millisBehindLatest(0L)
       .nextShardIterator(nextShardIterator)
       .build
@@ -427,7 +427,7 @@ object FakePollingClientConsumerFactory {
     override def getShards: Seq[Shard] = {
       listOfShards.map { streamShards =>
         streamShards.shard
-      }
+      }.toSeq
     }
   }
 }

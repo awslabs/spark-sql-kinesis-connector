@@ -42,12 +42,12 @@ case class RecordBatch (
         rawRecords.asJava,
         streamShard.shard.hashKeyRange().startingHashKey(),
         streamShard.shard.hashKeyRange().endingHashKey(),
-        millisBehindLatest).asScala
+        millisBehindLatest).asScala.toSeq
     } else {
       aggregatorUtil.deaggregate(
         rawRecords.asJava,
         millisBehindLatest
-      ).asScala
+      ).asScala.toSeq
     }
   }
 
