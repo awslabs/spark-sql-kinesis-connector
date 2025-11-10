@@ -6,21 +6,21 @@
   - Verify all dependency versions are compatible
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 1.1 Update core version properties in pom.xml
+- [x] 1.1 Update core version properties in pom.xml
   - Change `spark.version` from 3.5.5 to 4.0.0
   - Change `scala.binary.version` from 2.12 to 2.13
   - Change `maven.compiler.source` and `maven.compiler.target` from 1.8 to 17
   - Update `artifactId` from `spark-streaming-sql-kinesis-connector_2.12` to `spark-streaming-sql-kinesis-connector_2.13`
   - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
-- [ ] 1.2 Verify and update dependency versions
+- [x] 1.2 Verify and update dependency versions
   - Verify AWS SDK v2 (2.31.11) is compatible with Java 17
   - Verify Jackson (2.18.3) is compatible with Spark 4.0.0
   - Check if any Maven plugin versions need updates for Java 17
   - Update `outputDirectory` and `testOutputDirectory` paths to use scala-2.13
   - _Requirements: 2.5_
 
-- [ ] 1.3 Attempt initial build and document compilation errors
+- [x] 1.3 Attempt initial build and document compilation errors
   - Run `mvn clean compile` to identify compilation issues
   - Document all compilation errors for systematic resolution
   - Create a list of files that need Scala 2.13 updates
