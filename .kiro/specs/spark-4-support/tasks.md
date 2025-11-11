@@ -140,33 +140,33 @@
   - Fix other integration test files
   - _Requirements: 4.2, 4.4_
 
-- [ ] 5. Update documentation for Spark 4.0.0
+- [x] 5. Update documentation for Spark 4.0.0
   - Update README.md with new version requirements
   - Update code examples
   - Update artifact names
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 5.1 Update version requirements in README.md
+- [x] 5.1 Update version requirements in README.md
   - Update Spark version to 4.0.0
   - Update Scala version to 2.13
   - Update Java requirement to 17
   - Update "Current version is tested with Spark 3.2 and above" statement
   - _Requirements: 5.1, 5.2, 5.3_
 
-- [ ] 5.2 Update artifact names and Maven coordinates
+- [x] 5.2 Update artifact names and Maven coordinates
   - Change all `_2.12` references to `_2.13` in README
   - Update Maven dependency example
   - Update S3 jar file paths (e.g., spark-streaming-sql-kinesis-connector_2.13-1.0.0.jar)
   - Update spark-submit examples
   - _Requirements: 5.4_
 
-- [ ] 5.3 Review and update code examples
+- [x] 5.3 Review and update code examples
   - Verify all Scala code examples compile with Spark 4.0.0
   - Update examples if Spark 4.0.0 introduces relevant API changes
   - Test example code snippets
   - _Requirements: 5.5_
 
-- [ ] 5.4 Update build and developer setup instructions
+- [x] 5.4 Update build and developer setup instructions
   - Update Java version requirement in Developer Setup section
   - Update any version-specific build instructions
   - Verify build commands work with new versions

@@ -6,6 +6,10 @@ Implementation of Amazon Kinesis Data Streams connector in Spark Structured Stre
 
 ## Developer Setup
 
+**Prerequisites:**
+- Java 17 or higher
+- Maven 3.6.3 or higher
+
 Clone SparkSqlKinesisConnector from the source repository on GitHub.
 
 ```sh
@@ -15,33 +19,78 @@ cd spark-sql-kinesis-connector
 mvn clean install -DskipTests
 ```
 
-This will create `target/spark-streaming-sql-kinesis-connector_2.12-<kineisis-connector-version>-SNAPSHOT.jar` file which contains the connector and its shaded dependencies. The jar file will also be installed to local maven repository.
+This will create `target/spark-streaming-sql-kinesis-connector_2.13-<kineisis-connector-version>-SNAPSHOT.jar` file which contains the connector and its shaded dependencies. The jar file will also be installed to local maven repository.
 
 After the jar file is installed in local Maven repository, configure your project pom.xml (use Maven as an example):
 
 ```xml
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming-sql-kinesis-connector_2.12</artifactId>
+            <artifactId>spark-streaming-sql-kinesis-connector_2.13</artifactId>
             <version>${kinesis-connector-version}</version>
         </dependency>
 ```
 
+## Requirements
 
+- **Apache Spark**: 4.0.0 or higher
+- **Scala**: 2.13
+- **Java**: 17 or higher
 
-Current version is tested with Spark 3.2 and above.
+Current version is tested with Spark 4.0.0 and above.
+
+## Compatibility
+
+### Spark 4.0+ and Java 17+ Compatibility
+
+This connector is compatible with Spark 4.0+ and Java 17+. However, there are important considerations for metadata storage:
+
+**✅ DynamoDB Metadata Storage (Recommended)**
+- Fully compatible with Java 17+
+- No dependency on Hadoop
+- Recommended for cloud-native deployments
+
+**⚠️ HDFS Metadata Storage**
+- Has known compatibility issues with Java 17+ due to deprecated Java Security Manager APIs
+- The Hadoop version is determined by your Spark distribution (not by this connector)
+- Requires JVM workarounds for Java 17+
+
+**For detailed information about HDFS compatibility and the dependency chain, see [HDFS_COMPATIBILITY.md](HDFS_COMPATIBILITY.md).**
+
+### Recommended Configuration for Spark 4.0+
+
+For Spark 4.0+ with Java 17+, we recommend using DynamoDB for metadata storage:
+
+```scala
+spark.readStream
+  .format("aws-kinesis")
+  .option("kinesis.metadataCommitterType", "DYNAMODB")
+  .option("kinesis.dynamodb.tableName", "kinesis_metadata")
+  // ... other options
+  .load()
+```
+
+If you must use HDFS metadata storage with Java 17+, add these JVM flags:
+
+```bash
+spark-submit \
+  --conf "spark.driver.extraJavaOptions=--add-opens java.base/javax.security.auth=ALL-UNNAMED" \
+  --conf "spark.executor.extraJavaOptions=--add-opens java.base/javax.security.auth=ALL-UNNAMED" \
+  --jars spark-streaming-sql-kinesis-connector_2.13-1.4.3.jar \
+  your-app.jar
+```
 
 ### Public jar file
 
-For easier access, there is a public jar file available at S3.  For example, for version 1.0.0, the file path to jar file is `s3://awslabs-code-us-east-1/spark-sql-kinesis-connector/spark-streaming-sql-kinesis-connector_2.12-1.0.0.jar`.
+For easier access, there is a public jar file available at S3.  For example, for version 1.0.0, the file path to jar file is `s3://awslabs-code-us-east-1/spark-sql-kinesis-connector/spark-streaming-sql-kinesis-connector_2.13-1.0.0.jar`.
 
 To run with `spark-submit`,  include the jar file as below (version 1.0.0 as an example)
 ```
---jars s3://awslabs-code-us-east-1/spark-sql-kinesis-connector/spark-streaming-sql-kinesis-connector_2.12-1.0.0.jar
+--jars s3://awslabs-code-us-east-1/spark-sql-kinesis-connector/spark-streaming-sql-kinesis-connector_2.13-1.0.0.jar
 ```
-The jar file can also be downloaded at `https://awslabs-code-us-east-1.s3.amazonaws.com/spark-sql-kinesis-connector/spark-streaming-sql-kinesis-connector_2.12-1.0.0.jar`
+The jar file can also be downloaded at `https://awslabs-code-us-east-1.s3.amazonaws.com/spark-sql-kinesis-connector/spark-streaming-sql-kinesis-connector_2.13-1.0.0.jar`
 
-Change the jar file name based on version, e.g. version 1.1.0 is spark-streaming-sql-kinesis-connector_2.12-1.1.0.jar
+Change the jar file name based on version, e.g. version 1.1.0 is spark-streaming-sql-kinesis-connector_2.13-1.1.0.jar
 
 ## How to use it
 
@@ -470,6 +519,12 @@ Note: Using permanent credentials are not recommended due to security concerns.
 ## Security
 
 See [CONTRIBUTING](*CONTRIBUTING.md#security-issue-notifications*) for more information.
+
+## Additional Documentation
+
+- **[FAQ.md](FAQ.md)** - Frequently asked questions about compatibility, configuration, and troubleshooting
+- **[HDFS_COMPATIBILITY.md](HDFS_COMPATIBILITY.md)** - Detailed explanation of HDFS metadata storage compatibility with Java 17+
+- **[TESTING_WITH_AWS.md](TESTING_WITH_AWS.md)** - Guide for running integration tests with AWS resources
 
 ## Acknowledgement
 
