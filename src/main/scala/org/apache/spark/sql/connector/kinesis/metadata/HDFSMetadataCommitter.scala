@@ -47,21 +47,26 @@ import org.apache.spark.util.SerializableConfiguration
    would not have been contained within an external jar
  */
 
-class HDFSMetadataCommitter[T <: AnyRef : ClassTag](path: String,
+class HDFSMetadataCommitter[T <: AnyRef](path: String,
                                                     hadoopConf: SerializableConfiguration,
                                                     options: KinesisOptions )
+                                         (implicit classTag: ClassTag[T])
   extends MetadataCommitter[T] with Logging with Serializable{
 
 
   private implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
   /** Needed to serialize type T into JSON when using Jackson */
-  private implicit val manifest: Manifest[T] = Manifest.classType[T](implicitly[ClassTag[T]].runtimeClass)
+  private implicit lazy val manifest: Manifest[T] = Manifest.classType[T](classTag.runtimeClass)
 
   val metadataPath = new Path(path, META_PATH_SUBDIR)
 
   private val hadoopConfiguration = hadoopConf.value
   logInfo(s"HDFSMetadataCommitter metadataPath is ${metadataPath}, hadoopConf: ${hadoopConfiguration}")
+  
+  // Initialize UserGroupInformation to avoid Subject.getSubject() issues in Java 17+
+  // This ensures UGI is properly initialized before FileContext tries to get current user
+  org.apache.hadoop.security.UserGroupInformation.setConfiguration(hadoopConfiguration)
   
   protected val fileContext: FileContext = FileContext.getFileContext(metadataPath.toUri, hadoopConfiguration)
   

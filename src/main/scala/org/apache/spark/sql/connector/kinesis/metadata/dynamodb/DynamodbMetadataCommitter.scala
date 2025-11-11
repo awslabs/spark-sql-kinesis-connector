@@ -83,16 +83,17 @@ object DynamodbMetadataCommitter {
   private val CONSISTENT_READ = true
 }
 
-class DynamodbMetadataCommitter[T <: AnyRef : ClassTag](
+class DynamodbMetadataCommitter[T <: AnyRef](
       table: String,
       options: KinesisOptions,
       client: Option[DynamoDbAsyncClient] = None)
+     (implicit classTag: ClassTag[T])
   extends MetadataCommitter[T] with Logging with Serializable {
 
   private implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
   /** Needed to serialize type T into JSON when using Jackson */
-  private implicit val manifest: Manifest[T] = Manifest.classType[T](implicitly[ClassTag[T]].runtimeClass)
+  private implicit lazy val manifest: Manifest[T] = Manifest.classType[T](classTag.runtimeClass)
 
   var newTableCreated = false // only set to true if created a new table. Reuse existing is false
   private val tags: util.Collection[Tag] = DefaultSdkAutoConstructList.getInstance[Tag]

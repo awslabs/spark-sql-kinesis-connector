@@ -105,7 +105,7 @@ class KinesisTestUtils(streamShardCount: Int = 2) extends Logging {
   }
 
   def getShards(): Seq[Shard] = {
-    kinesisClient.describeStream(_streamName).getStreamDescription.getShards.asScala
+    kinesisClient.describeStream(_streamName).getStreamDescription.getShards.asScala.toSeq
   }
 
   def splitShard(shardId: String): Unit = {
@@ -298,7 +298,7 @@ class SimpleDataGenerator(client: AmazonKinesisClient) extends KinesisDataGenera
       sentSeqNumbers += ((num, seqNumber))
     }
 
-    shardIdToSeqNumbers.toMap
+    shardIdToSeqNumbers.view.mapValues(_.toSeq).toMap
   }
 }
 
@@ -341,7 +341,7 @@ class AggregateDataGenerator( client: AmazonKinesisClient) extends KinesisDataGe
     val sentSeqNumbers = shardIdToSeqNumbers.getOrElseUpdate(shardId, new ArrayBuffer[(String, String)]())
     sentSeqNumbers += ((pk, seqNumber))
 
-    shardIdToSeqNumbers.toMap
+    shardIdToSeqNumbers.view.mapValues(_.toSeq).toMap
   }
 }
 

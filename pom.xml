@@ -672,6 +672,7 @@
               <junitxml>.</junitxml>
               <filereports>WDF UnitTestSuite.txt</filereports>
               <tagsToExclude>org.apache.spark.sql.connector.kinesis.it.IntegrationTestSuite</tagsToExclude>
+              <argLine>-Djava.security.manager=allow</argLine>
             </configuration>
             <executions>
               <execution>

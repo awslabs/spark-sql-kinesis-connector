@@ -76,13 +76,13 @@
   - See `deprecation-warnings-analysis.md` for details
   - _Requirements: 3.5_
 
-- [ ] 3. Verify and update Spark 4.0.0 API usage
+- [x] 3. Verify and update Spark 4.0.0 API usage
   - Check DSv2 interface compatibility
   - Update any deprecated Spark API usage
   - Verify internal Spark API availability
   - _Requirements: 1.1, 1.5, 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 3.1 Verify DSv2 interface implementations
+- [x] 3.1 Verify DSv2 interface implementations
   - Check `Table` and `SupportsRead` interfaces in `KinesisV2Table`
   - Check `MicroBatchStream` and `SupportsAdmissionControl` interfaces in `KinesisV2MicrobatchStream`
   - Verify `ScanBuilder`, `Scan`, `InputPartition` interfaces
@@ -90,7 +90,7 @@
   - Verify `TableCapability` enum values are still valid
   - _Requirements: 3.2, 3.3, 3.4_
 
-- [ ] 3.2 Verify internal Spark API usage
+- [x] 3.2 Verify internal Spark API usage
   - Check `org.apache.spark.internal.Logging` is available
   - Check `org.apache.spark.sql.internal.SQLConf` is available
   - Check `org.apache.spark.util.SerializableConfiguration` is available
@@ -98,32 +98,32 @@
   - Find alternatives if any internal APIs were removed
   - _Requirements: 3.4, 3.5_
 
-- [ ] 3.3 Update deprecated API usage
+- [x] 3.3 Update deprecated API usage
   - Search for and replace any deprecated Spark API calls
   - Update to Spark 4.0.0 recommended alternatives
   - Document any API changes that affect functionality
   - _Requirements: 3.5_
 
-- [ ] 4. Update and fix test code for Spark 4.0.0
+- [x] 4. Update and fix test code for Spark 4.0.0
   - Fix test compilation errors
   - Update test utilities usage
   - Ensure all tests pass
   - _Requirements: 1.1, 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 4.1 Fix test compilation errors for Scala 2.13
+- [x] 4.1 Fix test compilation errors for Scala 2.13
   - Update collection imports in test files
   - Fix type inference issues in tests
   - Update any Scala 2.12-specific test code
   - _Requirements: 4.5_
 
-- [ ] 4.2 Update test utilities and fixtures
+- [x] 4.2 Update test utilities and fixtures
   - Update `KinesisTestUtils.scala` for Spark 4.0.0
   - Update `KinesisIntegrationTestBase.scala` for Spark 4.0.0
   - Verify SparkSession creation in tests works
   - Update any test data generation code
   - _Requirements: 4.3_
 
-- [ ] 4.3 Fix and run unit tests
+- [x] 4.3 Fix and run unit tests
   - Fix `HDFSMetaDataCommitterSuite.scala`
   - Fix `DynamodbMetadataCommitterSuite.scala`
   - Fix `ShardSyncerSuite.scala`
@@ -131,7 +131,7 @@
   - Run all unit tests and verify they pass
   - _Requirements: 4.1, 4.4_
 
-- [ ] 4.4 Fix and run integration tests
+- [x] 4.4 Fix and run integration tests
   - Fix `KinesisSourceItSuite.scala`
   - Fix `KinesisSinkItSuite.scala`
   - Fix `KinesisSourceReshardItSuite.scala`

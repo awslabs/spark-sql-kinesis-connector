@@ -74,7 +74,7 @@ class DynamodbMetadataCommitterSuite extends KinesisTestBase {
   val shardId = "001"
   val metadata = "test1"
 
-  private implicit val formats = Serialization.formats(NoTypeHints)
+  private implicit val formats: org.json4s.Formats = Serialization.formats(NoTypeHints)
 
   test("Dynamodb Committer init describeTable timeout exception") {
     val mockClient = mock(classOf[DynamoDbAsyncClient])

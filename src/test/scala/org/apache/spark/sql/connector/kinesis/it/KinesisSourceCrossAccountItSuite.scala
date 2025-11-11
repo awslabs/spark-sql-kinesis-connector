@@ -98,7 +98,7 @@ abstract class KinesisSourceCrossAccountItSuite(
     }
 
     logInfo(s"Pushed data ${data.mkString("Array(", ", ", ")")}:\n\t${shardIdToSeqNumbers.mkString("\n\t")}")
-    shardIdToSeqNumbers.toMap
+    shardIdToSeqNumbers.view.mapValues(_.toSeq).toMap
   }
 
   def createCrossAccountSparkCustomReadStream(consumerType: String,
