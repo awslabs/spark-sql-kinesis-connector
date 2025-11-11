@@ -21,6 +21,7 @@ import java.time.DateTimeException
 import java.time.format.DateTimeParseException
 import java.util.Locale
 
+import org.json4s.Formats
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import software.amazon.awssdk.services.kinesis.model.ShardIteratorType
@@ -158,7 +159,7 @@ class InitialKinesisPosition(shardPositions: Map[String, KinesisPosition],
 }
 
 object InitialKinesisPosition extends Logging {
-  implicit val format = Serialization.formats(NoTypeHints)
+  implicit val format: Formats = Serialization.formats(NoTypeHints)
 
   def fromPredefPosition(pos: KinesisPosition): InitialKinesisPosition =
     new InitialKinesisPosition(Map(), pos)

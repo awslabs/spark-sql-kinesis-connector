@@ -19,7 +19,7 @@ package org.apache.spark.sql.connector.kinesis
 import java.util
 import java.util.{HashMap => JHashMap}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import org.apache.spark.sql.connector.catalog.SupportsRead
 import org.apache.spark.sql.connector.catalog.Table

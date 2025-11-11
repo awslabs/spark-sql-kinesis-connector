@@ -25,7 +25,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.TimeUnit
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.reflect.ClassTag
 import scala.util.control.Breaks.break
@@ -33,6 +33,7 @@ import scala.util.control.Breaks.breakable
 import scala.util.control.NonFatal
 
 import com.google.common.collect.ImmutableMap
+import org.json4s.Formats
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import software.amazon.awssdk.core.SdkBytes
@@ -88,10 +89,10 @@ class DynamodbMetadataCommitter[T <: AnyRef : ClassTag](
       client: Option[DynamoDbAsyncClient] = None)
   extends MetadataCommitter[T] with Logging with Serializable {
 
-  private implicit val formats = Serialization.formats(NoTypeHints)
+  private implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
   /** Needed to serialize type T into JSON when using Jackson */
-  private implicit val manifest = Manifest.classType[T](implicitly[ClassTag[T]].runtimeClass)
+  private implicit val manifest: Manifest[T] = Manifest.classType[T](implicitly[ClassTag[T]].runtimeClass)
 
   var newTableCreated = false // only set to true if created a new table. Reuse existing is false
   private val tags: util.Collection[Tag] = DefaultSdkAutoConstructList.getInstance[Tag]
@@ -515,7 +516,7 @@ class DynamodbMetadataCommitter[T <: AnyRef : ClassTag](
         }
       }
     }
-    result
+    result.toSeq
   }
 
   // limit: specify the approximate number of items to return. It is a hint not a hard limit.
@@ -566,7 +567,7 @@ class DynamodbMetadataCommitter[T <: AnyRef : ClassTag](
       }
       logInfo(s"queryDataByBatchId- Listed ${result.size} item(s) from table ${table} " +
         s"for batchId ${batchId} with limit ${limit}.")
-      result.asScala
+      result.asScala.toSeq
     } catch {
       case e@(_: DynamoDbException | _: TimeoutException) =>
         throw convertAndRethrowExceptions(s"Get exception for table ${table} batchId ${batchId}", e)

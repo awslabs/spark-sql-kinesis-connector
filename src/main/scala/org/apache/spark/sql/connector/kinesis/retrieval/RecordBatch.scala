@@ -17,7 +17,7 @@
 package org.apache.spark.sql.connector.kinesis.retrieval
 
 import java.time.Instant
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import software.amazon.awssdk.services.kinesis.model.EncryptionType
 import software.amazon.awssdk.services.kinesis.model.Record
 import software.amazon.awssdk.services.kinesis.model.Shard
@@ -42,12 +42,12 @@ case class RecordBatch (
         rawRecords.asJava,
         streamShard.shard.hashKeyRange().startingHashKey(),
         streamShard.shard.hashKeyRange().endingHashKey(),
-        millisBehindLatest).asScala
+        millisBehindLatest).asScala.toSeq
     } else {
       aggregatorUtil.deaggregate(
         rawRecords.asJava,
         millisBehindLatest
-      ).asScala
+      ).asScala.toSeq
     }
   }
 

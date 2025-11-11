@@ -32,20 +32,20 @@
   - Address any deprecated API usage
   - _Requirements: 1.1, 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 2.1 Update collection imports across all source files
+- [x] 2.1 Update collection imports across all source files
   - Replace `scala.collection.JavaConverters._` with `scala.jdk.CollectionConverters._`
   - Update any usage of deprecated collection methods
   - Fix implicit conversion issues if any
   - _Requirements: 3.1, 3.5_
 
-- [ ] 2.2 Fix compilation errors in core connector files
+- [x] 2.2 Fix compilation errors in core connector files
   - Fix `KinesisV2Table.scala` for Scala 2.13 compatibility
   - Fix `KinesisV2MicrobatchStream.scala` for Scala 2.13 compatibility
   - Fix `KinesisV2ScanBuilder.scala` for Scala 2.13 compatibility
   - Fix `KinesisV2Scan.scala` for Scala 2.13 compatibility
   - _Requirements: 3.1, 3.2, 3.3_
 
-- [ ] 2.3 Fix compilation errors in reader/writer components
+- [x] 2.3 Fix compilation errors in reader/writer components
   - Fix `KinesisV2PartitionReader.scala` for Scala 2.13 compatibility
   - Fix `KinesisV2PartitionReaderFactory.scala` for Scala 2.13 compatibility
   - Fix `KinesisSink.scala` for Scala 2.13 compatibility
@@ -53,13 +53,28 @@
   - Fix `KinesisWriteTask.scala` for Scala 2.13 compatibility
   - _Requirements: 3.1, 3.2, 3.3_
 
-- [ ] 2.4 Fix compilation errors in supporting components
+- [x] 2.4 Fix compilation errors in supporting components
   - Fix `ShardSyncer.scala` for Scala 2.13 compatibility
   - Fix `KinesisOptions.scala` for Scala 2.13 compatibility
   - Fix metadata committer files for Scala 2.13 compatibility
   - Fix client files for Scala 2.13 compatibility
   - Fix retrieval components for Scala 2.13 compatibility
   - _Requirements: 3.1, 3.2, 3.3_
+
+- [x] 2.5 Fix Scala 2.13 implicit type annotation warnings
+  - Add explicit type annotations to implicit definitions in `KinesisModel.scala`
+  - Add explicit type annotations to implicit definitions in `KinesisV2SourceOffset.scala`
+  - Add explicit type annotations to implicit definitions in `HDFSMetadataCommitter.scala`
+  - Add explicit type annotations to implicit definitions in `DynamodbMetadataCommitter.scala`
+  - _Requirements: 3.1, 3.5_
+
+- [ ] 2.6 Address Scala 2.13 deprecation warnings (Future Work)
+  - Note: 15 deprecation warnings exist (4 since 2.13.0, 2 since 2.13.2, 9 since 2.13.3)
+  - These are warnings only and do not affect functionality
+  - Recommended to address in a separate PR after Spark 4.0.0 migration is complete
+  - Run `mvn compile -Dscalac.args="-deprecation"` to see detailed locations
+  - See `deprecation-warnings-analysis.md` for details
+  - _Requirements: 3.5_
 
 - [ ] 3. Verify and update Spark 4.0.0 API usage
   - Check DSv2 interface compatibility

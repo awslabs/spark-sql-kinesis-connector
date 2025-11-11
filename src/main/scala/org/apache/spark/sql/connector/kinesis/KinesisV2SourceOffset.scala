@@ -20,6 +20,7 @@ package org.apache.spark.sql.connector.kinesis
 import scala.collection.mutable
 import scala.util.control.NonFatal
 
+import org.json4s.Formats
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 
@@ -50,7 +51,7 @@ case class KinesisV2SourceOffset(shardsToOffsets: ShardOffsets) extends Offset {
 }
 
 object KinesisV2SourceOffset {
-  implicit val format = Serialization.formats(NoTypeHints)
+  implicit val format: Formats = Serialization.formats(NoTypeHints)
 
   def getShardOffsets(offset: Offset): ShardOffsets = {
     offset match {

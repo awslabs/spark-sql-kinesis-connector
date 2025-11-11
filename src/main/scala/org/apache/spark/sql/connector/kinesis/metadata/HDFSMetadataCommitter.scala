@@ -28,6 +28,7 @@ import scala.util.control.NonFatal
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.fs._
 import org.apache.hadoop.fs.permission.FsPermission
+import org.json4s.Formats
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.apache.spark.internal.Logging
@@ -52,10 +53,10 @@ class HDFSMetadataCommitter[T <: AnyRef : ClassTag](path: String,
   extends MetadataCommitter[T] with Logging with Serializable{
 
 
-  private implicit val formats = Serialization.formats(NoTypeHints)
+  private implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
   /** Needed to serialize type T into JSON when using Jackson */
-  private implicit val manifest = Manifest.classType[T](implicitly[ClassTag[T]].runtimeClass)
+  private implicit val manifest: Manifest[T] = Manifest.classType[T](implicitly[ClassTag[T]].runtimeClass)
 
   val metadataPath = new Path(path, META_PATH_SUBDIR)
 
