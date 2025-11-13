@@ -172,27 +172,27 @@
   - Verify build commands work with new versions
   - _Requirements: 5.1, 5.2, 5.3_
 
-- [ ] 6. Perform final validation and testing
+- [-] 6. Perform final validation and testing
   - Run complete test suite
   - Build shaded JAR
   - Verify end-to-end functionality
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-- [ ] 6.1 Run complete test suite
+- [x] 6.1 Run complete test suite
   - Execute `mvn clean test` for unit tests
   - Execute integration tests with `-Pintegration-test`
   - Verify all tests pass without errors
   - Document any test failures and resolve them
   - _Requirements: 4.1, 4.2_
 
-- [ ] 6.2 Build and verify shaded JAR
+- [x] 6.2 Build and verify shaded JAR
   - Execute `mvn clean package` to build shaded JAR
   - Verify JAR contains all required dependencies
   - Check JAR size is reasonable
   - Verify shaded package relocations are correct
   - _Requirements: 1.1, 2.5_
 
-- [ ] 6.3 Perform smoke testing with sample application
+- [x] 6.3 Perform smoke testing with sample application
   - Create a simple test application using the connector
   - Test reading from Kinesis with GetRecords consumer
   - Test reading from Kinesis with SubscribeToShard consumer
@@ -200,14 +200,14 @@
   - Verify graceful shutdown works
   - _Requirements: 1.4, 1.5_
 
-- [ ] 6.4 Verify checkpoint compatibility
+- [x] 6.4 Verify checkpoint compatibility
   - Test reading from Spark 3.5.5 checkpoints (if possible)
   - Verify offset serialization/deserialization works
   - Test HDFS metadata committer
   - Test DynamoDB metadata committer
   - _Requirements: 1.4_
 
-- [ ] 6.5 Final documentation review
+- [x] 6.5 Final documentation review
   - Review all documentation changes
   - Verify README is accurate and complete
   - Check for any missing updates

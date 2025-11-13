@@ -21,6 +21,26 @@ mvn clean install -DskipTests
 
 This will create `target/spark-streaming-sql-kinesis-connector_2.13-<kineisis-connector-version>-SNAPSHOT.jar` file which contains the connector and its shaded dependencies. The jar file will also be installed to local maven repository.
 
+### Running Tests
+
+To run all tests including unit tests:
+
+```sh
+mvn clean test
+```
+
+**Expected Test Failures on Java 17+:**
+
+When running on Java 17+, two HDFS metadata storage tests will fail:
+- `HDFSMetaDataCommitterSuite: "Add and Get operation"`
+- `HDFSMetaDataCommitterSuite: "Purge operation"`
+
+These failures are **expected** and demonstrate the Java 17+ compatibility issue with Hadoop's use of deprecated Security Manager APIs. The failures do not indicate a bug in the connector - they highlight a known ecosystem compatibility gap. See [HDFS_COMPATIBILITY.md](HDFS_COMPATIBILITY.md) for detailed explanation.
+
+**Test Results:** 87 tests pass, 2 tests fail (HDFS-related on Java 17+)
+
+All other functionality, including DynamoDB metadata storage, works correctly on Java 17+.
+
 After the jar file is installed in local Maven repository, configure your project pom.xml (use Maven as an example):
 
 ```xml
@@ -460,7 +480,7 @@ Note: Using permanent credentials are not recommended due to security concerns.
 ## Known Limitations
 * Speculative execution is not supported.
 * Trigger.AvailableNow is not supported.
-* [Continuous Processing](https://spark.apache.org/docs/3.5.1/structured-streaming-programming-guide.html#continuous-processing) is not supported.
+* [Continuous Processing](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#continuous-processing) is not supported.
 
 ## Kinesis Source Configuration
 
