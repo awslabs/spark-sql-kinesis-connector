@@ -22,6 +22,7 @@ import java.util.concurrent.{ExecutionException, TimeUnit}
 import scala.util.Try
 import scala.util.control.NonFatal
 
+import com.amazonaws.auth.{AWSCredentials, AWSCredentialsProvider, AWSSessionCredentials, BasicAWSCredentials, BasicSessionCredentials}
 import com.amazonaws.services.kinesis.producer.{KinesisProducer, KinesisProducerConfiguration}
 import com.google.common.cache._
 import com.google.common.util.concurrent.{ExecutionError, UncheckedExecutionException}
@@ -85,14 +86,50 @@ object CachedKinesisProducer extends Logging {
       KinesisOptions.SINK_AGGREGATION_ENABLED.toLowerCase(Locale.ROOT),
       KinesisOptions.DEFAULT_SINK_AGGREGATION)
       .toBoolean } getOrElse { KinesisOptions.DEFAULT_SINK_AGGREGATION.toBoolean}
-
+    
+    val builder = ConnectorAwsCredentialsProvider.builder
+    
+    val customProviderClass = producerConfiguration.get(KinesisOptions.CUSTOM_CREDENTIAL_PROVIDER_CLASS.toLowerCase(Locale.ROOT))
+    val customProviderParam = producerConfiguration.get(KinesisOptions.CUSTOM_CREDENTIAL_PROVIDER_PARAM.toLowerCase(Locale.ROOT))
+    
+    if (customProviderClass.isDefined) {
+      builder.customCredentials(customProviderClass.get, customProviderParam)
+    }
+    
+    val stsRoleArn = producerConfiguration.get(KinesisOptions.STS_ROLE_ARN.toLowerCase(Locale.ROOT))
+    val stsSessionName = producerConfiguration.get(KinesisOptions.STS_SESSION_NAME.toLowerCase(Locale.ROOT))
+    val stsEndpoint = producerConfiguration.get(KinesisOptions.STS_ENDPOINT_URL.toLowerCase(Locale.ROOT))
+    
+    if (stsRoleArn.isDefined) {
+      builder.stsCredentials(stsRoleArn, stsSessionName, region, stsEndpoint)
+    } else {
+      val awsAccessKeyId = producerConfiguration.get(KinesisOptions.AWS_ACCESS_KEY_ID.toLowerCase(Locale.ROOT))
+      val awsSecretKey = producerConfiguration.get(KinesisOptions.AWS_SECRET_KEY.toLowerCase(Locale.ROOT))
+      if (awsAccessKeyId.isDefined) {
+        builder.staticCredentials(awsAccessKeyId, awsSecretKey, None)
+      }
+    }
+    
+    val connectorProvider = builder.build()
+    
+    val sdkV1Provider = new AWSCredentialsProvider {
+      override def getCredentials: AWSCredentials = {
+        val creds = connectorProvider.provider.resolveCredentials()
+        creds match {
+          case sessionCreds: software.amazon.awssdk.auth.credentials.AwsSessionCredentials =>
+            new BasicSessionCredentials(sessionCreds.accessKeyId(), sessionCreds.secretAccessKey(), sessionCreds.sessionToken())
+          case basicCreds =>
+            new BasicAWSCredentials(basicCreds.accessKeyId(), basicCreds.secretAccessKey())
+        }
+      }
+      override def refresh(): Unit = {}
+    }
+    
     val kinesisProducerConfiguration = new KinesisProducerConfiguration()
       .setRecordMaxBufferedTime(recordMaxBufferedTime)
       .setMaxConnections(maxConnections)
       .setAggregationEnabled(aggregation)
-      .setCredentialsProvider(
-        com.amazonaws.auth.DefaultAWSCredentialsProviderChain.getInstance
-      )
+      .setCredentialsProvider(sdkV1Provider)
       .setRegion(region)
       .setRecordTtl(recordTTL)
 
