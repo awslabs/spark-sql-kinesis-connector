@@ -19,24 +19,24 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.amazon.emr</groupId>
-  <artifactId>spark-streaming-sql-kinesis-connector_2.12</artifactId>
-  <version>1.4.3-SNAPSHOT</version>
+  <artifactId>spark-streaming-sql-kinesis-connector_2.13</artifactId>
+  <version>2.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>Spark Structured Streaming Kinesis Connector</name>
   <description>Connector to read from and write into Kinesis from Structured Streaming Applications</description>
 
 
   <properties>
-    <spark.version>3.5.5</spark.version>
-    <scala.binary.version>2.12</scala.binary.version>
+    <spark.version>4.0.1</spark.version>
+    <scala.binary.version>2.13</scala.binary.version>
     <fasterxml.jackson.version>2.18.3</fasterxml.jackson.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <aws.sdkv2.version>2.31.11</aws.sdkv2.version>
     <aws.kpl.version>0.15.12</aws.kpl.version>
     <log4j.version>2.24.3</log4j.version>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
   </properties>
 
   <dependencyManagement>
@@ -126,10 +126,6 @@
           <groupId>org.apache.zookeeper</groupId>
           <artifactId>zookeeper</artifactId>
         </exclusion>
-        <exclusion>
-          <groupId>org.apache.ivy</groupId>
-          <artifactId>ivy</artifactId>
-        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -149,10 +145,6 @@
         <exclusion>
           <groupId>org.apache.zookeeper</groupId>
           <artifactId>zookeeper</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.apache.ivy</groupId>
-          <artifactId>ivy</artifactId>
         </exclusion>
       </exclusions>
     </dependency>

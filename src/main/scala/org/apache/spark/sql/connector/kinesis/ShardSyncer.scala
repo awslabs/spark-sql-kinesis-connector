@@ -240,7 +240,7 @@ object ShardSyncer extends Logging {
 
     logDebug(s"getLatestShardInfo filteredPrevShardsInfo ${filteredPrevShardsInfo}")
     logDebug(s"getLatestShardInfo newShardsInfoMap ${newShardsInfoMap}")
-    filteredPrevShardsInfo ++ newShardsInfoMap.values.toSeq
+    filteredPrevShardsInfo.toSeq ++ newShardsInfoMap.values.toSeq
   }
 
   private def updateShard(

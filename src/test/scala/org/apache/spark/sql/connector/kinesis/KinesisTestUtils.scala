@@ -105,7 +105,7 @@ class KinesisTestUtils(streamShardCount: Int = 2) extends Logging {
   }
 
   def getShards(): Seq[Shard] = {
-    kinesisClient.describeStream(_streamName).getStreamDescription.getShards.asScala
+    kinesisClient.describeStream(_streamName).getStreamDescription.getShards.asScala.toSeq
   }
 
   def splitShard(shardId: String): Unit = {
@@ -158,7 +158,7 @@ class KinesisTestUtils(streamShardCount: Int = 2) extends Logging {
    * shardId -> seq of (data, seq number) pushed to corresponding shard
    */
   def pushData(testData: Array[String], aggregate: Boolean,
-               pkOption: Option[String] = None): Map[String, Seq[(String, String)]] = {
+               pkOption: Option[String] = None): Map[String, ArrayBuffer[(String, String)]] = {
     require(streamCreated, "Stream not yet created, call createStream() to create one")
     logInfo(s"Push data aggregate ${aggregate}")
     val producer = getProducer(aggregate)
@@ -276,12 +276,12 @@ class TestConsumer(private val initialStartingPosition: KinesisPosition) extends
 trait KinesisDataGenerator {
   /** Sends the data to Kinesis and returns the metadata for everything that has been sent. */
   def sendData(streamName: String, data: Array[String], pkOption: Option[String]):
-  Map[String, Seq[(String, String)]]
+  Map[String, ArrayBuffer[(String, String)]]
 }
 
 class SimpleDataGenerator(client: AmazonKinesisClient) extends KinesisDataGenerator {
   override def sendData(streamName: String, data: Array[String], pkOption: Option[String]):
-  Map[String, Seq[(String, String)]] = {
+  Map[String, ArrayBuffer[(String, String)]] = {
     val shardIdToSeqNumbers =
       new mutable.HashMap[String, ArrayBuffer[(String, String)]]()
     data.foreach { num =>
@@ -319,7 +319,7 @@ class EnhancedKinesisTestUtils(streamShardCount: Int)
 /** A wrapper for the record aggregator. */
 class AggregateDataGenerator( client: AmazonKinesisClient) extends KinesisDataGenerator {
   override def sendData(streamName: String, data: Array[String], pkOption: Option[String]):
-  Map[String, Seq[(String, String)]] = {
+  Map[String, ArrayBuffer[(String, String)]] = {
 
     val recordAggregator = new RecordAggregator
 

@@ -311,7 +311,7 @@ class DynamodbMetadataCommitter[T <: AnyRef : ClassTag](
       queryDataByBatchId(batchId, fromDynamoItem)
     }
     logDebug(s"get result size ${result.length} from table ${table} for batchId ${batchId}")
-    result
+    result.toSeq
   }
 
   override def purgeBefore(thresholdBatchId: Long): Unit = {
@@ -515,7 +515,7 @@ class DynamodbMetadataCommitter[T <: AnyRef : ClassTag](
         }
       }
     }
-    result
+    result.toSeq
   }
 
   // limit: specify the approximate number of items to return. It is a hint not a hard limit.
