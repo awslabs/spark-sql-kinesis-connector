@@ -18,7 +18,7 @@ package org.apache.spark.sql.connector.kinesis.it
 
 import java.util.concurrent.CompletionException
 
-import scala.collection.JavaConverters.mapAsJavaMapConverter
+import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
 
 import org.apache.commons.lang3.RandomStringUtils.randomAlphabetic

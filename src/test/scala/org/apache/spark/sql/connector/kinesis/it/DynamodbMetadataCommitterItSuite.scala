@@ -23,7 +23,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-import scala.collection.JavaConverters.mapAsJavaMapConverter
+import scala.jdk.CollectionConverters._
 
 import com.google.common.util.concurrent.MoreExecutors
 import org.apache.commons.lang3.RandomStringUtils.randomAlphabetic

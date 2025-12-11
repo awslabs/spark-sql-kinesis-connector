@@ -19,7 +19,7 @@ package org.apache.spark.sql.connector.kinesis
 
 import java.time.Duration
 
-import scala.collection.JavaConverters.mapAsJavaMapConverter
+import scala.jdk.CollectionConverters._
 
 import org.scalatest.BeforeAndAfter
 import org.scalatest.BeforeAndAfterAll

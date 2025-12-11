@@ -19,7 +19,7 @@ package org.apache.spark.sql.connector.kinesis
 import java.time.Duration
 
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import org.apache.spark.sql.connector.kinesis.KinesisOptions._
 import org.apache.spark.sql.connector.kinesis.KinesisOptionsSuite._

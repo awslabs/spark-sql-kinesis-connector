@@ -54,7 +54,7 @@ class EfoRecordBatchPublisher (
     logDebug(s"EfoRecordBatchPublisher runProcessLoop on ${streamShard}, startingPosition: ${nextStartingPosition}")
     val eventConsumer = new Consumer[SubscribeToShardEvent]() {
       override def accept(event: SubscribeToShardEvent): Unit = {
-        val recordBatch = RecordBatch (event.records.asScala, streamShard, event.millisBehindLatest)
+        val recordBatch = RecordBatch (event.records.asScala.toSeq, streamShard, event.millisBehindLatest)
         val sequenceNumber = recordBatchConsumer.accept (recordBatch)
         nextStartingPosition = getNextStartingPosition (sequenceNumber, nextStartingPosition)
       }}

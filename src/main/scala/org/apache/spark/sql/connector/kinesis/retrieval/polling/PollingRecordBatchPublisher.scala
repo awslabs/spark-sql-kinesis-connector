@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.connector.kinesis.retrieval.polling
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 import software.amazon.awssdk.services.kinesis.model.ExpiredIteratorException
 import software.amazon.awssdk.services.kinesis.model.GetRecordsResponse
@@ -79,7 +79,7 @@ class PollingRecordBatchPublisher(
     if (nextShardItr == null) return COMPLETE
     
     val result = getRecords(nextShardItr, maxNumberOfRecords)
-    val recordBatch = RecordBatch(result.records().asScala, streamShard, result.millisBehindLatest)
+    val recordBatch = RecordBatch(result.records().asScala.toSeq, streamShard, result.millisBehindLatest)
     val latestSequenceNumber = consumer.accept(recordBatch)
     nextStartingPosition = getNextStartingPosition(latestSequenceNumber, nextStartingPosition)
     nextShardItr = result.nextShardIterator

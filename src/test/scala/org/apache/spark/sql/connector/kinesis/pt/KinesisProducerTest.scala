@@ -56,7 +56,7 @@ object KinesisProducerTest {
     val spark = sparkBuilder.getOrCreate()
     spark.sparkContext.setLogLevel("INFO")
 
-    import spark.sqlContext.implicits._
+    import spark.implicits._
     val reader = spark
       .readStream
       .format("rate")

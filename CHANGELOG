@@ -1,5 +1,12 @@
 Changelog
 =========
+v1.4.3
+----------------------------
+- upgrade to Spark 4.0.0, Scala 2.13, and Java 17
+- update all dependencies for Spark 4.0.0 compatibility
+- add comprehensive documentation for Java 17+ compatibility considerations
+- add smoke tests for Spark 4.0.0 validation
+
 v1.4.1
 ----------------------------
 - fix bug in recordTtl casing (issue #35)

@@ -24,7 +24,7 @@ import java.util
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContextExecutorService
 import scala.concurrent.Future
@@ -367,7 +367,7 @@ case class KinesisClientConsumerImpl(
       }
     } while (nextToken.nonEmpty)
 
-    shards.asScala
+    shards.asScala.toSeq
   }
 
   /*
