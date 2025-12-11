@@ -294,6 +294,7 @@ class KinesisV2PartitionReader (schema: StructType,
           case "subSequenceNumber" => UTF8String.fromString(record.sequenceNumber.subSequenceNumber.toString)
           case "approximateArrivalTimestamp" => ChronoUnit.MICROS.between(Instant.EPOCH, record.approximateArrivalTimestamp)
           case "data" => record.data
+          case "shardId" => UTF8String.fromString(kinesisShardId)
           case name =>
             throw new UnsupportedOperationException("Unsupported field name in schema " + name)
         }.toSeq)
