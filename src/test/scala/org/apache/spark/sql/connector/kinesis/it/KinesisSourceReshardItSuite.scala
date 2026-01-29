@@ -76,9 +76,9 @@ abstract class KinesisSourceReshardItSuite(aggregateTestData: Boolean,
       Execute { query =>
         logInfo("Splitting Shards")
         val shardToSplit = testUtils.getShards().head
-        testUtils.splitShard(shardToSplit.getShardId)
+        testUtils.splitShard(shardToSplit.shardId())
         val (splitOpenShards, splitCloseShards) = testUtils.getShards().partition { shard =>
-          shard.getSequenceNumberRange.getEndingSequenceNumber == null
+          shard.sequenceNumberRange().endingSequenceNumber() == null
         }
         logInfo(s"splitCloseShards ${splitCloseShards}, splitOpenShards ${splitOpenShards}")
         // We should have one closed shard and two open shards
@@ -104,13 +104,13 @@ abstract class KinesisSourceReshardItSuite(aggregateTestData: Boolean,
       Execute { query =>
         logInfo("Merging Shards")
         val (openShard, closeShard) = testUtils.getShards().partition { shard =>
-          shard.getSequenceNumberRange.getEndingSequenceNumber == null
+          shard.sequenceNumberRange().endingSequenceNumber() == null
         }
         val Seq(shardToMerge, adjShard) = openShard
-        testUtils.mergeShard(shardToMerge.getShardId, adjShard.getShardId)
+        testUtils.mergeShard(shardToMerge.shardId(), adjShard.shardId())
         val (mergedOpenShards, mergedCloseShards) = testUtils.getShards().partition
         { shard =>
-          shard.getSequenceNumberRange.getEndingSequenceNumber == null
+          shard.sequenceNumberRange().endingSequenceNumber() == null
         }
         logInfo(s"mergedCloseShards ${mergedCloseShards}, mergedOpenShards ${mergedOpenShards}")
         // We should have three closed shards and one open shard
@@ -178,9 +178,9 @@ abstract class KinesisSourceReshardItSuite(aggregateTestData: Boolean,
 
       logInfo("Splitting Shards")
       val shardToSplit = localTestUtils.getShards().head
-      localTestUtils.splitShard(shardToSplit.getShardId)
+      localTestUtils.splitShard(shardToSplit.shardId())
       val (splitOpenShards, splitCloseShards) = localTestUtils.getShards().partition { shard =>
-        shard.getSequenceNumberRange.getEndingSequenceNumber == null
+        shard.sequenceNumberRange().endingSequenceNumber() == null
       }
       logInfo(s"splitCloseShards ${splitCloseShards}, splitOpenShards ${splitOpenShards}")
       // We should have one closed shard and two open shards
@@ -194,12 +194,12 @@ abstract class KinesisSourceReshardItSuite(aggregateTestData: Boolean,
 
       logInfo("Merging Shards")
       val (openShard, closeShard) = localTestUtils.getShards().partition { shard =>
-        shard.getSequenceNumberRange.getEndingSequenceNumber == null
+        shard.sequenceNumberRange().endingSequenceNumber() == null
       }
       val Seq(shardToMerge, adjShard) = openShard
-      localTestUtils.mergeShard(shardToMerge.getShardId, adjShard.getShardId)
+      localTestUtils.mergeShard(shardToMerge.shardId(), adjShard.shardId())
       val (mergedOpenShards, mergedCloseShards) = localTestUtils.getShards().partition { shard =>
-        shard.getSequenceNumberRange.getEndingSequenceNumber == null
+        shard.sequenceNumberRange().endingSequenceNumber() == null
       }
       logInfo(s"mergedCloseShards ${mergedCloseShards}, mergedOpenShards ${mergedOpenShards}")
       // We should have three closed shards and one open shard
@@ -259,9 +259,9 @@ abstract class KinesisSourceReshardItSuite(aggregateTestData: Boolean,
           1 to 10 foreach { i =>
             logInfo(s"Round ${i} Splitting Shards")
             val shardToSplit = localTestUtils2.getShards().last
-            localTestUtils2.splitShard(shardToSplit.getShardId)
+            localTestUtils2.splitShard(shardToSplit.shardId())
             val (splitOpenShards, splitCloseShards) = localTestUtils2.getShards().partition { shard =>
-              shard.getSequenceNumberRange.getEndingSequenceNumber == null
+              shard.sequenceNumberRange().endingSequenceNumber() == null
             }
             logInfo(s"Round ${i} splitCloseShards ${splitCloseShards}, splitOpenShards ${splitOpenShards}")
 
@@ -269,12 +269,12 @@ abstract class KinesisSourceReshardItSuite(aggregateTestData: Boolean,
 
             logInfo(s"Round ${i} Merging Shards")
             val (openShard, closeShard) = localTestUtils2.getShards().partition { shard =>
-              shard.getSequenceNumberRange.getEndingSequenceNumber == null
+              shard.sequenceNumberRange().endingSequenceNumber() == null
             }
             val Seq(shardToMerge, adjShard) = openShard.take(2)
-            localTestUtils2.mergeShard(shardToMerge.getShardId, adjShard.getShardId)
+            localTestUtils2.mergeShard(shardToMerge.shardId(), adjShard.shardId())
             val (mergedOpenShards, mergedCloseShards) = localTestUtils2.getShards().partition { shard =>
-              shard.getSequenceNumberRange.getEndingSequenceNumber == null
+              shard.sequenceNumberRange().endingSequenceNumber() == null
             }
             logInfo(s"Round ${i} mergedCloseShards ${mergedCloseShards}, mergedOpenShards ${mergedOpenShards}")
 

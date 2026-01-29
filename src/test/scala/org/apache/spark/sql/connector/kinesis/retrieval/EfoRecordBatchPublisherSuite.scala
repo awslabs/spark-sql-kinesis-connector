@@ -27,8 +27,6 @@ import scala.collection.mutable
 import scala.util.control.Breaks.break
 import scala.util.control.Breaks.breakable
 
-import com.amazonaws.http.timers.client.SdkInterruptedException
-import com.amazonaws.kinesis.agg.RecordAggregator
 import io.netty.handler.timeout.ReadTimeoutException
 import org.apache.commons.lang3.RandomStringUtils.randomAlphabetic
 import org.mockito.ArgumentMatchers
@@ -40,6 +38,7 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import software.amazon.awssdk.core.SdkBytes
+import software.amazon.awssdk.core.exception.SdkInterruptedException
 import software.amazon.awssdk.services.kinesis.model.HashKeyRange
 import software.amazon.awssdk.services.kinesis.model.LimitExceededException
 import software.amazon.awssdk.services.kinesis.model.Record
@@ -57,11 +56,13 @@ import org.apache.spark.sql.connector.kinesis.KinesisTestBase
 import org.apache.spark.sql.connector.kinesis.Latest
 import org.apache.spark.sql.connector.kinesis.TestConsumer
 import org.apache.spark.sql.connector.kinesis.TrimHorizon
+import org.apache.spark.sql.connector.kinesis.agg.RecordAggregator
 import org.apache.spark.sql.connector.kinesis.client.KinesisClientConsumer
 import org.apache.spark.sql.connector.kinesis.retrieval.RecordBatchPublisherRunStatus.CANCELLED
 import org.apache.spark.sql.connector.kinesis.retrieval.RecordBatchPublisherRunStatus.INCOMPLETE
 import org.apache.spark.sql.connector.kinesis.retrieval.client.FakeEfoClientConsumerFactory._
 import org.apache.spark.sql.connector.kinesis.retrieval.efo.EfoRecordBatchPublisher
+
 class EfoRecordBatchPublisherSuite extends KinesisTestBase {
 
 

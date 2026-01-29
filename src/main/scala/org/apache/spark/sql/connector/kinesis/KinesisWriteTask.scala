@@ -18,12 +18,14 @@ package org.apache.spark.sql.connector.kinesis
 
 import java.nio.ByteBuffer
 import java.util.Locale
+
 import scala.util.Try
-import com.amazonaws.services.kinesis.producer.KinesisProducer
-import com.amazonaws.services.kinesis.producer.UserRecordResult
+
 import com.google.common.util.concurrent.FutureCallback
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
+import software.amazon.kinesis.producer.{KinesisProducer, UserRecordResult}
+
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.{Attribute, Cast, Literal, UnsafeProjection}

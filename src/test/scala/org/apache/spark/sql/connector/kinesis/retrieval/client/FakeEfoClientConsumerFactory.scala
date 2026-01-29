@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import scala.collection.mutable.ArrayBuffer
 
-import com.amazonaws.kinesis.agg.RecordAggregator
 import org.apache.commons.lang3.RandomStringUtils.randomAlphabetic
 import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito.doAnswer
@@ -54,6 +53,8 @@ import software.amazon.awssdk.services.kinesis.model.SubscribeToShardEventStream
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardRequest
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardResponse
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardResponseHandler
+
+import org.apache.spark.sql.connector.kinesis.agg.RecordAggregator
 
 object FakeEfoClientConsumerFactory {
   val STREAM_ARN = "stream-arn"

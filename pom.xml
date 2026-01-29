@@ -33,7 +33,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <aws.sdkv2.version>2.31.11</aws.sdkv2.version>
-    <aws.kpl.version>0.15.12</aws.kpl.version>
+    <aws.kpl.version>1.0.6</aws.kpl.version>
     <log4j.version>2.24.3</log4j.version>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
@@ -51,7 +51,7 @@
       <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
-        <version>3.25.5</version>
+        <version>4.29.0</version>
       </dependency>
       <dependency>
         <groupId>org.json</groupId>
@@ -166,12 +166,7 @@
 <!--      <version>1.14.8</version>-->
 <!--    </dependency>-->
     <dependency>
-      <groupId>com.amazonaws</groupId>
-      <artifactId>aws-java-sdk</artifactId>
-      <version>1.12.782</version>
-    </dependency>
-    <dependency>
-      <groupId>com.amazonaws</groupId>
+      <groupId>software.amazon.kinesis</groupId>
       <artifactId>amazon-kinesis-producer</artifactId>
       <version>${aws.kpl.version}</version>
     </dependency>
@@ -231,6 +226,12 @@
       <version>${log4j.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>software.amazon.kinesis</groupId>
+      <artifactId>amazon-kinesis-client</artifactId>
+      <version>2.6.0</version>
+      <scope>test</scope>
+    </dependency>
     
     <!--
       This spark-tags test-dep is needed even though it isn't used in this module, otherwise testing-cmds that exclude
@@ -242,35 +243,6 @@
       <type>test-jar</type>
       <scope>test</scope>
       <version>${spark.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.amazonaws</groupId>
-      <artifactId>amazon-kinesis-aggregator</artifactId>
-      <version>1.0.3</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.amazonaws</groupId>
-          <artifactId>aws-java-sdk-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.amazonaws</groupId>
-          <artifactId>aws-java-sdk-s3</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.amazonaws</groupId>
-          <artifactId>aws-java-sdk-cloudwatch</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.amazonaws</groupId>
-          <artifactId>aws-java-sdk-dynamodb</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.amazonaws</groupId>
-          <artifactId>aws-java-sdk-kinesis</artifactId>
-        </exclusion>
-      </exclusions>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -415,9 +387,6 @@
               <configuration>
                 <artifactSet>
                   <includes>
-                    <include>com.amazonaws:amazon-kinesis-producer:*</include>
-                    <include>com.amazonaws:aws-java-sdk-kinesis:*</include>
-                    <include>com.amazonaws:aws-java-sdk-core:*</include>
                     <include>software.amazon.glue:schema-registry-serde:*</include>
                     <include>software.amazon.awssdk:sts:*</include>
                     <include>software.amazon.awssdk:kinesis:*</include>
@@ -451,6 +420,7 @@
                     <include>software.amazon.awssdk:retries-spi:*</include>
                     <include>software.amazon.awssdk:third-party-jackson-core:*</include>
                     <include>software.amazon.awssdk:third-party-jackson-dataformat-cbor:*</include>
+                    <include>software.amazon.kinesis:amazon-kinesis-producer:*</include>
                     <include>io.dropwizard.metrics:metrics-core:*</include>
                     <include>org.reactivestreams:reactive-streams:*</include>
                     <include>io.netty:netty-common:*</include>
@@ -478,13 +448,6 @@
                     </includes>
                   </relocation>
                   <relocation>
-                    <pattern>com.amazonaws.services</pattern>
-                    <shadedPattern>org.apache.spark.sql.connector.kinesis.shaded.com.amazonaws.services</shadedPattern>
-                    <includes>
-                      <include>com.amazonaws.services.**</include>
-                    </includes>
-                  </relocation>
-                  <relocation>
                     <pattern>com.amazonaws</pattern>
                     <shadedPattern>org.apache.spark.sql.connector.kinesis.shaded.com.amazonaws</shadedPattern>
                     <includes>
@@ -503,6 +466,13 @@
                     <shadedPattern>org.apache.spark.sql.connector.kinesis.shaded.software.amazon.eventstream</shadedPattern>
                     <includes>
                       <include>software.amazon.eventstream.**</include>
+                    </includes>
+                  </relocation>
+                  <relocation>
+                    <pattern>software.amazon.kinesis</pattern>
+                    <shadedPattern>org.apache.spark.sql.connector.kinesis.shaded.software.amazon.kinesis</shadedPattern>
+                    <includes>
+                      <include>software.amazon.kinesis.**</include>
                     </includes>
                   </relocation>
                   <relocation>

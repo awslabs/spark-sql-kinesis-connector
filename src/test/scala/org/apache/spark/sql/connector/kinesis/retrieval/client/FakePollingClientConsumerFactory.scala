@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import scala.collection.mutable
 
-import com.amazonaws.kinesis.agg.RecordAggregator
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.StringUtils
 import software.amazon.awssdk.core.SdkBytes
@@ -38,6 +37,7 @@ import software.amazon.awssdk.services.kinesis.model.Record
 import software.amazon.awssdk.services.kinesis.model.SequenceNumberRange
 import software.amazon.awssdk.services.kinesis.model.Shard
 
+import org.apache.spark.sql.connector.kinesis.agg.RecordAggregator
 import org.apache.spark.sql.connector.kinesis.client.KinesisClientConsumer
 import org.apache.spark.sql.connector.kinesis.retrieval.StreamShard
 

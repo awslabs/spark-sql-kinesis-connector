@@ -20,9 +20,9 @@ import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.amazonaws.http.timers.client.SdkInterruptedException
 import io.netty.handler.timeout.ReadTimeoutException
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import software.amazon.awssdk.core.exception.SdkInterruptedException
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardEvent
 
 import org.apache.spark.sql.connector.kinesis.KinesisTestBase

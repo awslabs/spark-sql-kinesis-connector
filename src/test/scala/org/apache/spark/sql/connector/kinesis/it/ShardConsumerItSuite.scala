@@ -117,9 +117,9 @@ abstract class ShardConsumerItSuite(aggregateTestData: Boolean, consumerType: St
 
       logInfo("Splitting Shards")
       val shardToSplit = testUtils.getShards().head
-      testUtils.splitShard(shardToSplit.getShardId)
+      testUtils.splitShard(shardToSplit.shardId())
       val (splitOpenShards, splitCloseShards) = testUtils.getShards().partition { shard =>
-        shard.getSequenceNumberRange.getEndingSequenceNumber == null
+        shard.sequenceNumberRange().endingSequenceNumber() == null
       }
       logInfo(s"splitCloseShards ${splitCloseShards}, splitOpenShards ${splitOpenShards}")
       // We should have one closed shard and two open shards

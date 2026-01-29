@@ -146,12 +146,12 @@ abstract class KinesisSourceItSuite(aggregateTestData: Boolean,
         Execute { _ =>
           logInfo("Merging Shards")
           val (openShard, _) = localTestUtils.getShards().partition { shard =>
-            shard.getSequenceNumberRange.getEndingSequenceNumber == null
+            shard.sequenceNumberRange().endingSequenceNumber() == null
           }
           val Seq(shardToMerge, adjShard) = openShard
-          localTestUtils.mergeShard(shardToMerge.getShardId, adjShard.getShardId)
+          localTestUtils.mergeShard(shardToMerge.shardId(), adjShard.shardId())
           val (mergedOpenShards, mergedCloseShards) = localTestUtils.getShards().partition { shard =>
-            shard.getSequenceNumberRange.getEndingSequenceNumber == null
+            shard.sequenceNumberRange().endingSequenceNumber() == null
           }
           assert(mergedCloseShards.size == 2)
           assert(mergedOpenShards.size == 1)

@@ -104,7 +104,7 @@ object KinesisConsumerTest {
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
         .config("spark.hadoop.fs.AbstractFileSystem.s3a.impl", "org.apache.hadoop.fs.s3a.S3A")
         .config("spark.hadoop.fs.s3a.aws.credentials.provider",
-          "com.amazonaws.auth.EnvironmentVariableCredentialsProvider")
+          "software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider")
 //        .config("spark.driver.bindAddress", "127.0.0.1") // VPN env.
     }
   }

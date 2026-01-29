@@ -25,14 +25,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
-import com.amazonaws.services.kinesis.producer.protobuf.Messages;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.kinesis.model.Record;
+import software.amazon.kinesis.producer.protobuf.Messages;
 
 // This is class is based on the same class in KCL 2.5.0
 public class AggregatorUtil {

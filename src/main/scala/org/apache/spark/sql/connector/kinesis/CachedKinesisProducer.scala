@@ -22,10 +22,9 @@ import java.util.concurrent.{ExecutionException, TimeUnit}
 import scala.util.Try
 import scala.util.control.NonFatal
 
-import com.amazonaws.auth.{AWSCredentials, AWSCredentialsProvider, AWSSessionCredentials, BasicAWSCredentials, BasicSessionCredentials}
-import com.amazonaws.services.kinesis.producer.{KinesisProducer, KinesisProducerConfiguration}
 import com.google.common.cache._
 import com.google.common.util.concurrent.{ExecutionError, UncheckedExecutionException}
+import software.amazon.kinesis.producer.{KinesisProducer, KinesisProducerConfiguration}
 
 import org.apache.spark.SparkEnv
 import org.apache.spark.internal.Logging
@@ -112,24 +111,11 @@ object CachedKinesisProducer extends Logging {
     
     val connectorProvider = builder.build()
     
-    val sdkV1Provider = new AWSCredentialsProvider {
-      override def getCredentials: AWSCredentials = {
-        val creds = connectorProvider.provider.resolveCredentials()
-        creds match {
-          case sessionCreds: software.amazon.awssdk.auth.credentials.AwsSessionCredentials =>
-            new BasicSessionCredentials(sessionCreds.accessKeyId(), sessionCreds.secretAccessKey(), sessionCreds.sessionToken())
-          case basicCreds =>
-            new BasicAWSCredentials(basicCreds.accessKeyId(), basicCreds.secretAccessKey())
-        }
-      }
-      override def refresh(): Unit = {}
-    }
-    
     val kinesisProducerConfiguration = new KinesisProducerConfiguration()
       .setRecordMaxBufferedTime(recordMaxBufferedTime)
       .setMaxConnections(maxConnections)
       .setAggregationEnabled(aggregation)
-      .setCredentialsProvider(sdkV1Provider)
+      .setCredentialsProvider(connectorProvider.provider)
       .setRegion(region)
       .setRecordTtl(recordTTL)
 
