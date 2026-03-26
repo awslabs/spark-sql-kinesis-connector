@@ -49,7 +49,7 @@ object FakePollingClientConsumerFactory {
     override def getShardIterator(shardId: String,
                                   iteratorType: String,
                                   iteratorPosition: String,
-                                  failOnDataLoss: Boolean = true): String = null
+                                  failOnDataLoss: Boolean = false): String = null
 
     override def getKinesisRecords(shardIterator: String, limit: Int): GetRecordsResponse = null
   }
@@ -122,7 +122,7 @@ object FakePollingClientConsumerFactory {
     override def getShardIterator(shardId: String,
                                   iteratorType: String,
                                   iteratorPosition: String,
-                                  failOnDataLoss: Boolean = true): String = {
+                                  failOnDataLoss: Boolean = false): String = {
       val t = remainingIterators.toString
       remainingIterators -= 1
       t
@@ -163,7 +163,7 @@ object FakePollingClientConsumerFactory {
     override def getShardIterator(shardId: String,
                                   iteratorType: String,
                                   iteratorPosition: String,
-                                  failOnDataLoss: Boolean = true): String = null
+                                  failOnDataLoss: Boolean = false): String = null
 
 
     override def getKinesisRecords(shardIterator: String, limit: Int): GetRecordsResponse = null
@@ -223,7 +223,7 @@ object FakePollingClientConsumerFactory {
     override def getShardIterator(shardId: String,
                                   iteratorType: String,
                                   iteratorPosition: String,
-                                  failOnDataLoss: Boolean = true): String = {
+                                  failOnDataLoss: Boolean = false): String = {
       // Should be called only once. Simply return the iterator of the first batch of records
       "0"
     }
@@ -266,7 +266,7 @@ object FakePollingClientConsumerFactory {
     override def getShardIterator(shardId: String,
                                   iteratorType: String,
                                   iteratorPosition: String,
-                                  failOnDataLoss: Boolean = true): String = if (!expiredOnceAlready) {
+                                  failOnDataLoss: Boolean = false): String = if (!expiredOnceAlready) {
       // for the first call, just return the iterator of the first batch of records
       "0"
     }
@@ -351,7 +351,7 @@ object FakePollingClientConsumerFactory {
     override def getShardIterator(shardId: String,
                                   iteratorType: String,
                                   iteratorPosition: String,
-                                  failOnDataLoss: Boolean = true): String = {
+                                  failOnDataLoss: Boolean = false): String = {
       // Should be called only once. Simply return the iterator of the first batch of records
       "0"
     }
@@ -392,7 +392,7 @@ object FakePollingClientConsumerFactory {
     override def getShardIterator(shardId: String,
                                   iteratorType: String,
                                   iteratorPosition: String,
-                                  failOnDataLoss: Boolean = true): String = {
+                                  failOnDataLoss: Boolean = false): String = {
       BlockingQueueKinesis.getShardIterator(streamName, shardId)
     }
 

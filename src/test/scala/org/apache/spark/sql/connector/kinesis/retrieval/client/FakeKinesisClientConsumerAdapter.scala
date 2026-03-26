@@ -63,7 +63,7 @@ class FakeKinesisClientConsumerAdapter extends KinesisClientConsumer {
   override def getShardIterator(shardId: String,
                                 iteratorType: String,
                                 iteratorPosition: String,
-                                failOnDataLoss: Boolean = true): String = {
+                                failOnDataLoss: Boolean = false): String = {
     throw new UnsupportedOperationException("This method is not implemented.")
   }
 

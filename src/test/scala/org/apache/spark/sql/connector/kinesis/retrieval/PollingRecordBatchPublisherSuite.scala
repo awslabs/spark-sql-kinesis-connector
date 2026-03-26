@@ -146,7 +146,7 @@ class PollingRecordBatchPublisherSuite extends KinesisTestBase {
 
     // Get shard iterator is called twice, once during first run, secondly to refresh expired
     // iterator
-    verify(kinesisClient, times(2)).getShardIterator("", "", "")
+    verify(kinesisClient, times(2)).getShardIterator("shardId-000000000000", "LATEST", "", false)
 
     consumer.getRecordBatches.size shouldBe 1
     consumer.getRecordBatches.get(0).userRecords.size shouldBe 2
