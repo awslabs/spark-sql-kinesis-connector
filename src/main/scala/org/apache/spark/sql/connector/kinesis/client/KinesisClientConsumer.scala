@@ -47,7 +47,7 @@ trait KinesisClientConsumer {
   def getShardIterator(shardId: String,
                         iteratorType: String,
                         iteratorPosition: String,
-                        failOnDataLoss: Boolean = false): String
+                        failOnDataLoss: Boolean): String
 
   def getKinesisRecords(shardIterator: String, limit: Int): GetRecordsResponse
 

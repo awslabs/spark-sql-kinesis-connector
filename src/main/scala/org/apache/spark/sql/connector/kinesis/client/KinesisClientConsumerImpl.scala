@@ -286,7 +286,7 @@ case class KinesisClientConsumerImpl(
   override def getShardIterator(shardId: String,
                        iteratorType: String,
                        iteratorPosition: String,
-                       failOnDataLoss: Boolean = false): String = {
+                       failOnDataLoss: Boolean = options.failOnDataLoss): String = {
 
     val getShardIteratorRequestBuilder = GetShardIteratorRequest.builder()
       .shardId(shardId)

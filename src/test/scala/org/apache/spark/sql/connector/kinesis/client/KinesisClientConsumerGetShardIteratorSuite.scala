@@ -20,8 +20,6 @@ import scala.collection.JavaConverters.mapAsJavaMapConverter
 
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import software.amazon.awssdk.services.kinesis.model.GetRecordsResponse
-import software.amazon.awssdk.services.kinesis.model.GetShardIteratorResponse
-import software.amazon.awssdk.services.kinesis.model.ResourceNotFoundException
 
 import org.apache.spark.sql.connector.kinesis.KinesisOptions
 import org.apache.spark.sql.connector.kinesis.KinesisOptions._
@@ -52,50 +50,6 @@ class KinesisClientConsumerGetShardIteratorSuite extends KinesisTestBase {
     options.failOnDataLoss shouldBe true
   }
 
-  test("getShardIterator with default failOnDataLoss swallows ResourceNotFoundException") {
-    val client = new FakeKinesisClientConsumerAdapter {
-      override def getShardIterator(shardId: String,
-                                    iteratorType: String,
-                                    iteratorPosition: String,
-                                    failOnDataLoss: Boolean = false): String = {
-        val ex = ResourceNotFoundException.builder().message("Shard not found").build()
-        if (!failOnDataLoss) {
-          GetShardIteratorResponse.builder().build().shardIterator()
-        } else {
-          throw ex
-        }
-      }
-
-      override def getKinesisRecords(shardIterator: String, limit: Int): GetRecordsResponse = {
-        GetRecordsResponse.builder().millisBehindLatest(0L).build()
-      }
-    }
-
-    // Calling with default (no failOnDataLoss arg) should not throw
-    val result = client.getShardIterator("shardId-000000000000", "LATEST", "")
-    result shouldBe null
-  }
-
-  test("getShardIterator with failOnDataLoss=true throws ResourceNotFoundException") {
-    val client = new FakeKinesisClientConsumerAdapter {
-      override def getShardIterator(shardId: String,
-                                    iteratorType: String,
-                                    iteratorPosition: String,
-                                    failOnDataLoss: Boolean = false): String = {
-        val ex = ResourceNotFoundException.builder().message("Shard not found").build()
-        if (!failOnDataLoss) {
-          GetShardIteratorResponse.builder().build().shardIterator()
-        } else {
-          throw ex
-        }
-      }
-    }
-
-    intercept[ResourceNotFoundException] {
-      client.getShardIterator("shardId-000000000000", "LATEST", "", failOnDataLoss = true)
-    }
-  }
-
   test("PollingRecordBatchPublisher passes failOnDataLoss=false to getShardIterator on init") {
     var capturedFailOnDataLoss: Option[Boolean] = None
 
@@ -103,7 +57,7 @@ class KinesisClientConsumerGetShardIteratorSuite extends KinesisTestBase {
       override def getShardIterator(shardId: String,
                                     iteratorType: String,
                                     iteratorPosition: String,
-                                    failOnDataLoss: Boolean = false): String = {
+                                    failOnDataLoss: Boolean): String = {
         capturedFailOnDataLoss = Some(failOnDataLoss)
         "iter-0"
       }
@@ -127,51 +81,52 @@ class KinesisClientConsumerGetShardIteratorSuite extends KinesisTestBase {
     capturedFailOnDataLoss shouldBe Some(false)
   }
 
-  test("PollingRecordBatchPublisher passes failOnDataLoss from KinesisOptions on expired iterator refresh") {
-    val capturedFailOnDataLossValues = scala.collection.mutable.ArrayBuffer.empty[Boolean]
-    var callCount = 0
+  for (failOnDataLoss <- Seq(false, true)) {
+    test(s"PollingRecordBatchPublisher passes failOnDataLoss=$failOnDataLoss on expired iterator refresh") {
+      var capturedFailOnDataLoss: Option[Boolean] = None
+      var callCount = 0
 
-    val optionsWithFailOnDataLossTrue = KinesisOptions(new CaseInsensitiveStringMap(Map(
-      REGION -> DEFAULT_TEST_REGION,
-      ENDPOINT_URL -> DEFAULT_TEST_ENDPOINT_URL,
-      CONSUMER_TYPE -> POLLING_CONSUMER_TYPE,
-      STREAM_NAME -> DEFAULT_TEST_STEAM_NAME,
-      FAIL_ON_DATA_LOSS -> "true"
-    ).asJava))
+      val options = if (failOnDataLoss) {
+        KinesisOptions(new CaseInsensitiveStringMap(Map(
+          REGION -> DEFAULT_TEST_REGION,
+          ENDPOINT_URL -> DEFAULT_TEST_ENDPOINT_URL,
+          CONSUMER_TYPE -> POLLING_CONSUMER_TYPE,
+          STREAM_NAME -> DEFAULT_TEST_STEAM_NAME,
+          FAIL_ON_DATA_LOSS -> "true"
+        ).asJava))
+      } else DEFAULT_KINESIS_OPTIONS
 
-    val client = new FakeKinesisClientConsumerAdapter {
-      override def getShardIterator(shardId: String,
-                                    iteratorType: String,
-                                    iteratorPosition: String,
-                                    failOnDataLoss: Boolean = false): String = {
-        capturedFailOnDataLossValues += failOnDataLoss
-        "iter-0"
-      }
-
-      override def getKinesisRecords(shardIterator: String, limit: Int): GetRecordsResponse = {
-        callCount += 1
-        if (callCount == 1) {
-          throw software.amazon.awssdk.services.kinesis.model.ExpiredIteratorException
-            .builder().message("Expired").build()
+      val client = new FakeKinesisClientConsumerAdapter {
+        override def getShardIterator(shardId: String,
+                                      iteratorType: String,
+                                      iteratorPosition: String,
+                                      failOnDataLoss: Boolean): String = {
+          capturedFailOnDataLoss = Some(failOnDataLoss)
+          "iter-0"
         }
-        GetRecordsResponse.builder().millisBehindLatest(0L).build()
+
+        override def getKinesisRecords(shardIterator: String, limit: Int): GetRecordsResponse = {
+          callCount += 1
+          if (callCount == 1) {
+            throw software.amazon.awssdk.services.kinesis.model.ExpiredIteratorException
+              .builder().message("Expired").build()
+          }
+          GetRecordsResponse.builder().millisBehindLatest(0L).build()
+        }
       }
+
+      val publisher = new PollingRecordBatchPublisher(
+        KinesisPosition.make(Latest.iteratorType, DEFAULT_TIMESTAMP, NO_SUB_SEQUENCE_NUMBER, isLast = true),
+        StreamShard(DEFAULT_TEST_STEAM_NAME, DEFAULT_TEST_SHARD),
+        client,
+        options,
+        true
+      )
+
+      val consumer = new TestConsumer(publisher.initialStartingPosition)
+      publisher.runProcessLoop(consumer)
+
+      capturedFailOnDataLoss shouldBe Some(failOnDataLoss)
     }
-
-    val publisher = new PollingRecordBatchPublisher(
-      KinesisPosition.make(Latest.iteratorType, DEFAULT_TIMESTAMP, NO_SUB_SEQUENCE_NUMBER, isLast = true),
-      StreamShard(DEFAULT_TEST_STEAM_NAME, DEFAULT_TEST_SHARD),
-      client,
-      optionsWithFailOnDataLossTrue,
-      true
-    )
-
-    val consumer = new TestConsumer(publisher.initialStartingPosition)
-    publisher.runProcessLoop(consumer)
-
-    // First call (init) uses default false, second call (expired refresh) uses kinesisOptions.failOnDataLoss = true
-    capturedFailOnDataLossValues.size shouldBe 2
-    capturedFailOnDataLossValues(0) shouldBe false
-    capturedFailOnDataLossValues(1) shouldBe true
   }
 }

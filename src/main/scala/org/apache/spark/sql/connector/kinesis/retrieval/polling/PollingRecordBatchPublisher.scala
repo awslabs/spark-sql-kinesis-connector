@@ -114,7 +114,7 @@ class PollingRecordBatchPublisher(
     getRecordsResult
   }
 
-    private def getShardIterator(failOnDataLoss: Boolean = false) = {
+  private def getShardIterator(failOnDataLoss: Boolean = kinesisOptions.failOnDataLoss) = {
 
     val iteratorType = if ( nextStartingPosition.iteratorType == AfterSequenceNumber.iteratorType
       && nextStartingPosition.subSequenceNumber != NO_SUB_SEQUENCE_NUMBER
