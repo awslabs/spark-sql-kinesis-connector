@@ -111,7 +111,9 @@ class KinesisV2MicrobatchStream (
     val shardIterator = kinesisClient.getShardIterator(
       shardInfo.shardId,
       shardInfo.iteratorType,
-      shardInfo.iteratorPosition)
+      shardInfo.iteratorPosition,
+      options.failOnDataLoss
+    )
 
     def getRecordsResponseInfo(shardIterator: String): (Int, Long, String) = {
       val records = kinesisClient.getKinesisRecords(shardIterator, 1)

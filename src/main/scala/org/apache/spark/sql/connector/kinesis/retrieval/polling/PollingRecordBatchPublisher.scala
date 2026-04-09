@@ -50,7 +50,7 @@ class PollingRecordBatchPublisher(
   // visible for test only
   var nextStartingPosition: KinesisPosition = initialStartingPosition
 
-  private var nextShardItr: String = getShardIterator
+  private var nextShardItr: String = getShardIterator()
   private var processingStartTimeNanos = System.nanoTime
 
   private var lastRecordBatchSize = 0
@@ -105,7 +105,7 @@ class PollingRecordBatchPublisher(
       catch {
         case eiEx: ExpiredIteratorException =>
           logError(s"Encountered an unexpected expired iterator ${nextShardItr} for shard ${streamShard}. refreshing the iterator ...", eiEx)
-          nextShardItr = getShardIterator
+          nextShardItr = getShardIterator(kinesisOptions.failOnDataLoss)
           // sleep for the fetch interval before the next getRecords attempt with the
           // refreshed iterator
           if (fetchIntervalMillis != 0) Thread.sleep(fetchIntervalMillis)
@@ -114,7 +114,7 @@ class PollingRecordBatchPublisher(
     getRecordsResult
   }
 
-  private def getShardIterator = {
+  private def getShardIterator(failOnDataLoss: Boolean = kinesisOptions.failOnDataLoss) = {
 
     val iteratorType = if ( nextStartingPosition.iteratorType == AfterSequenceNumber.iteratorType
       && nextStartingPosition.subSequenceNumber != NO_SUB_SEQUENCE_NUMBER
@@ -127,7 +127,9 @@ class PollingRecordBatchPublisher(
     kinesisConsumer.getShardIterator(
       streamShard.shard.shardId(),
       iteratorType,
-      nextStartingPosition.iteratorPosition)
+      nextStartingPosition.iteratorPosition,
+      failOnDataLoss
+    )
   }
 
   private def adjustToFetchInterval(processingStartTimeNanos: Long, processingEndTimeNanos: Long) = {

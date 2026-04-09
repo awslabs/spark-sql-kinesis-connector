@@ -37,19 +37,23 @@ import software.amazon.awssdk.services.kinesis.model.Record
 import software.amazon.awssdk.services.kinesis.model.SequenceNumberRange
 import software.amazon.awssdk.services.kinesis.model.Shard
 
+import org.apache.spark.sql.connector.kinesis.KinesisOptions
 import org.apache.spark.sql.connector.kinesis.agg.RecordAggregator
 import org.apache.spark.sql.connector.kinesis.client.KinesisClientConsumer
 import org.apache.spark.sql.connector.kinesis.retrieval.StreamShard
 
 object FakePollingClientConsumerFactory {
 
-  def noShardsFoundForRequestedStreams: KinesisClientConsumer = new FakeKinesisClientConsumerAdapter() {
+  def noShardsFoundForRequestedStreams: KinesisClientConsumer = noShardsFoundForRequestedStreams(None)
+
+  def noShardsFoundForRequestedStreams(kinesisOptions: Option[KinesisOptions] = None): KinesisClientConsumer
+  = new FakeKinesisClientConsumerAdapter() {
     override def getShards: Seq[Shard] = Seq.empty[Shard]
 
     override def getShardIterator(shardId: String,
                                   iteratorType: String,
                                   iteratorPosition: String,
-                                  failOnDataLoss: Boolean = true): String = null
+                                  failOnDataLoss: Boolean = kinesisOptions.get.failOnDataLoss): String = null
 
     override def getKinesisRecords(shardIterator: String, limit: Int): GetRecordsResponse = null
   }
@@ -69,6 +73,16 @@ object FakePollingClientConsumerFactory {
       millisBehindLatest)
   }
 
+  def totalNumOfRecordsAfterNumOfGetRecordsCalls(numOfRecords: Int,
+                                                 numOfGetRecordsCalls: Int,
+                                                 millisBehindLatest: Long,
+                                                 kinesisOptions: KinesisOptions): KinesisClientConsumer = {
+    new SingleShardEmittingFixNumOfRecordsKinesis(numOfRecords,
+      numOfGetRecordsCalls,
+      millisBehindLatest,
+      kinesisOptions)
+  }
+
   def totalNumOfRecordsAfterNumOfGetRecordsCallsWithUnexpectedExpiredIterator(numOfRecords: Int,
                                                                               numOfGetRecordsCall: Int,
                                                                               orderOfCallToExpire: Int,
@@ -79,12 +93,34 @@ object FakePollingClientConsumerFactory {
       millisBehindLatest)
   }
 
+  def totalNumOfRecordsAfterNumOfGetRecordsCallsWithUnexpectedExpiredIterator(numOfRecords: Int,
+                                                                              numOfGetRecordsCall: Int,
+                                                                              orderOfCallToExpire: Int,
+                                                                              millisBehindLatest: Long,
+                                                                              kinesisOptions: Option[KinesisOptions] = None)
+  : KinesisClientConsumer = {
+    new SingleShardEmittingFixNumOfRecordsWithExpiredIteratorKinesis(numOfRecords,
+      numOfGetRecordsCall,
+      orderOfCallToExpire,
+      millisBehindLatest,
+      kinesisOptions.get)
+  }
+
   def aggregatedRecords(numOfAggregatedRecords: Int, numOfChildRecords: Int, numOfGetRecordsCalls: Int): KinesisClientConsumer = {
     new SingleShardEmittingAggregatedRecordsKinesis(numOfAggregatedRecords, numOfChildRecords, numOfGetRecordsCalls)
   }
 
+  def aggregatedRecords(numOfAggregatedRecords: Int, numOfChildRecords: Int, numOfGetRecordsCalls: Int, kinesisOptions: KinesisOptions)
+  : KinesisClientConsumer = {
+    new SingleShardEmittingAggregatedRecordsKinesis(numOfAggregatedRecords, numOfChildRecords, numOfGetRecordsCalls, kinesisOptions)
+  }
+
   def blockingQueueGetRecords(streamName: String, shardQueues: Seq[BlockingQueue[String]]): KinesisClientConsumer = {
     new BlockingQueueKinesis(streamName, shardQueues)
+  }
+
+  def blockingQueueGetRecords(streamName: String, shardQueues: Seq[BlockingQueue[String]], kinesisOptions: KinesisOptions): KinesisClientConsumer = {
+    new BlockingQueueKinesis(streamName, shardQueues, kinesisOptions)
   }
 
   def generateFromShardOrder(order: Int): String = "shardId-%012d".format(order)
@@ -115,14 +151,15 @@ object FakePollingClientConsumerFactory {
     StreamShard(streamName, shard)
   }
 
-  class SingleShardEmittingZeroRecords (var remainingIterators: Int) extends FakeKinesisClientConsumerAdapter {
+  class SingleShardEmittingZeroRecords (var remainingIterators: Int)
+    extends FakeKinesisClientConsumerAdapter {
 
     override def getShards: Seq[Shard] = null
 
     override def getShardIterator(shardId: String,
                                   iteratorType: String,
                                   iteratorPosition: String,
-                                  failOnDataLoss: Boolean = true): String = {
+                                  failOnDataLoss: Boolean): String = {
       val t = remainingIterators.toString
       remainingIterators -= 1
       t
@@ -163,7 +200,7 @@ object FakePollingClientConsumerFactory {
     override def getShardIterator(shardId: String,
                                   iteratorType: String,
                                   iteratorPosition: String,
-                                  failOnDataLoss: Boolean = true): String = null
+                                  failOnDataLoss: Boolean): String = null
 
 
     override def getKinesisRecords(shardIterator: String, limit: Int): GetRecordsResponse = null
@@ -186,7 +223,13 @@ object FakePollingClientConsumerFactory {
 
   class SingleShardEmittingFixNumOfRecordsKinesis(totalNumOfRecords: Int,
                                                   totalNumOfGetRecordsCalls: Int,
-                                                  millisBehindLatest: Long) extends FakeKinesisClientConsumerAdapter {
+                                                  millisBehindLatest: Long,
+                                                  kinesisOptions: Option[KinesisOptions] = None) extends FakeKinesisClientConsumerAdapter {
+
+    def this(totalNumOfRecords: Int, totalNumOfGetRecordsCalls: Int, millisBehindLatest: Long) =
+      this(totalNumOfRecords, totalNumOfGetRecordsCalls, millisBehindLatest, None)
+    def this(totalNumOfRecords: Int, totalNumOfGetRecordsCalls: Int, millisBehindLatest: Long, kinesisOptions: KinesisOptions) =
+      this(totalNumOfRecords, totalNumOfGetRecordsCalls, millisBehindLatest, Some(kinesisOptions))
 
     // initialize the record batches that we will be fetched
     val shardItrToRecordBatch = mutable.Map.empty[String, Seq[Record]]
@@ -223,7 +266,7 @@ object FakePollingClientConsumerFactory {
     override def getShardIterator(shardId: String,
                                   iteratorType: String,
                                   iteratorPosition: String,
-                                  failOnDataLoss: Boolean = true): String = {
+                                  failOnDataLoss: Boolean = kinesisOptions.get.failOnDataLoss): String = {
       // Should be called only once. Simply return the iterator of the first batch of records
       "0"
     }
@@ -235,8 +278,14 @@ object FakePollingClientConsumerFactory {
   class SingleShardEmittingFixNumOfRecordsWithExpiredIteratorKinesis(numOfRecords: Int,
                                                                      numOfGetRecordsCalls: Int,
                                                                      orderOfCallToExpire: Int,
-                                                                     millisBehindLatest: Long)
-    extends SingleShardEmittingFixNumOfRecordsKinesis(numOfRecords, numOfGetRecordsCalls, millisBehindLatest) {
+                                                                     millisBehindLatest: Long,
+                                                                     kinesisOptions: Option[KinesisOptions] = None)
+    extends SingleShardEmittingFixNumOfRecordsKinesis(numOfRecords, numOfGetRecordsCalls, millisBehindLatest, kinesisOptions) {
+
+    def this(numOfRecords: Int, numOfGetRecordsCalls: Int, orderOfCallToExpire: Int, millisBehindLatest: Long) =
+      this(numOfRecords, numOfGetRecordsCalls, orderOfCallToExpire, millisBehindLatest, None)
+    def this(numOfRecords: Int, numOfGetRecordsCalls: Int, orderOfCallToExpire: Int, millisBehindLatest: Long, kinesisOptions: KinesisOptions) =
+      this(numOfRecords, numOfGetRecordsCalls, orderOfCallToExpire, millisBehindLatest, Some(kinesisOptions))
 
     assert(orderOfCallToExpire <= numOfGetRecordsCalls)
 
@@ -266,7 +315,7 @@ object FakePollingClientConsumerFactory {
     override def getShardIterator(shardId: String,
                                   iteratorType: String,
                                   iteratorPosition: String,
-                                  failOnDataLoss: Boolean = true): String = if (!expiredOnceAlready) {
+                                  failOnDataLoss: Boolean): String = if (!expiredOnceAlready) {
       // for the first call, just return the iterator of the first batch of records
       "0"
     }
@@ -322,15 +371,28 @@ object FakePollingClientConsumerFactory {
 
   private class SingleShardEmittingAggregatedRecordsKinesis(numOfAggregatedRecords: Int,
                                                             numOfChildRecords: Int,
-                                                            numOfGetRecordsCalls: Int)
+                                                            numOfGetRecordsCalls: Int,
+                                                            kinesisOptions: Option[KinesisOptions] = None)
     extends SingleShardEmittingKinesis(
-      SingleShardEmittingAggregatedRecordsKinesis.initShardItrToRecordBatch(numOfAggregatedRecords, numOfChildRecords, numOfGetRecordsCalls)
-    ) {}
+      SingleShardEmittingAggregatedRecordsKinesis.initShardItrToRecordBatch(numOfAggregatedRecords, numOfChildRecords, numOfGetRecordsCalls),
+      0L,
+      kinesisOptions
+    ) {
+    
+    def this(numOfAggregatedRecords: Int, numOfChildRecords: Int, numOfGetRecordsCalls: Int) =
+      this(numOfAggregatedRecords, numOfChildRecords, numOfGetRecordsCalls, None)
+    def this(numOfAggregatedRecords: Int, numOfChildRecords: Int, numOfGetRecordsCalls: Int, kinesisOptions: KinesisOptions) =
+      this(numOfAggregatedRecords, numOfChildRecords, numOfGetRecordsCalls, Some(kinesisOptions))
+  }
 
   abstract class SingleShardEmittingKinesis (shardItrToRecordBatch: Map[String, Seq[Record]],
-                                             millisBehindLatest: Long) extends FakeKinesisClientConsumerAdapter {
+                                             millisBehindLatest: Long,
+                                             kinesisOptions: Option[KinesisOptions] = None) extends FakeKinesisClientConsumerAdapter {
     def this(shardItrToRecordBatch: Map[String, Seq[Record]]) {
-      this(shardItrToRecordBatch, 0L)
+      this(shardItrToRecordBatch, 0L, None)
+    }
+    def this(shardItrToRecordBatch: Map[String, Seq[Record]], kinesisOptions: KinesisOptions) {
+      this(shardItrToRecordBatch, 0L, Some(kinesisOptions))
     }
 
     override def getKinesisRecords(shardIterator: String, limit: Int): GetRecordsResponse = {
@@ -351,7 +413,7 @@ object FakePollingClientConsumerFactory {
     override def getShardIterator(shardId: String,
                                   iteratorType: String,
                                   iteratorPosition: String,
-                                  failOnDataLoss: Boolean = true): String = {
+                                  failOnDataLoss: Boolean): String = {
       // Should be called only once. Simply return the iterator of the first batch of records
       "0"
     }
@@ -364,7 +426,12 @@ object FakePollingClientConsumerFactory {
     def getShardIterator(streamName: String, shardId: String): String = s"${streamName}-${shardId}"
   }
 
-  class BlockingQueueKinesis(streamName: String, shardQueues: Seq[BlockingQueue[String]]) extends FakeKinesisClientConsumerAdapter {
+  class BlockingQueueKinesis(streamName: String, shardQueues: Seq[BlockingQueue[String]], kinesisOptions: Option[KinesisOptions] = None)
+    extends FakeKinesisClientConsumerAdapter {
+
+    def this(streamName: String, shardQueues: Seq[BlockingQueue[String]]) = this(streamName, shardQueues, None)
+    def this(streamName: String, shardQueues: Seq[BlockingQueue[String]], kinesisOptions: KinesisOptions)
+      = this(streamName, shardQueues, Some(kinesisOptions))
 
     private val listOfShards = mutable.ArrayBuffer.empty[StreamShard]
     private val shardIteratorToQueueMap = mutable.Map.empty[String, BlockingQueue[String]]
@@ -392,7 +459,7 @@ object FakePollingClientConsumerFactory {
     override def getShardIterator(shardId: String,
                                   iteratorType: String,
                                   iteratorPosition: String,
-                                  failOnDataLoss: Boolean = true): String = {
+                                  failOnDataLoss: Boolean): String = {
       BlockingQueueKinesis.getShardIterator(streamName, shardId)
     }
 
