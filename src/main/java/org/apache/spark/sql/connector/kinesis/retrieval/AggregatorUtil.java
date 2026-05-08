@@ -201,7 +201,7 @@ public class AggregatorUtil {
               }
               sb.append("Sequence number: ").append(r.sequenceNumber()).append("\n")
                   .append("Raw data: ")
-                  .append(javax.xml.bind.DatatypeConverter.printBase64Binary(messageData)).append("\n");
+                  .append(java.util.Base64.getEncoder().encodeToString(messageData)).append("\n");
               log.error(sb.toString(), e);
             }
           } catch (InvalidProtocolBufferException e) {
