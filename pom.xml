@@ -679,41 +679,6 @@
         </plugins>
       </build>
     </profile>
-    <profile>
-      <id>java-8-compatible</id>
-      <activation>
-        <jdk>[9,)</jdk>
-      </activation>
-      <properties>
-        <maven.compiler.release>8</maven.compiler.release>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>net.alchim31.maven</groupId>
-            <artifactId>scala-maven-plugin</artifactId>
-          </plugin>
-          <plugin>
-            <groupId>org.scalatest</groupId>
-            <artifactId>scalatest-maven-plugin</artifactId>
-            <configuration>
-              <reportsDirectory>${project.build.directory}/unittest-reports</reportsDirectory>
-              <junitxml>.</junitxml>
-              <filereports>WDF UnitTestSuite.txt</filereports>
-              <tagsToExclude>org.apache.spark.sql.connector.kinesis.it.IntegrationTestSuite</tagsToExclude>
-            </configuration>
-            <executions>
-              <execution>
-                <id>test</id>
-                <goals>
-                  <goal>test</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
     
   </profiles>
 
@@ -731,9 +696,9 @@
   <reporting>
     <plugins>
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>cobertura-maven-plugin</artifactId>
-        <version>2.7</version>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.14</version>
       </plugin>
     </plugins>
   </reporting>
