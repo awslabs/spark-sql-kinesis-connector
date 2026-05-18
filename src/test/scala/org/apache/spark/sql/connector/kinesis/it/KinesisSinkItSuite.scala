@@ -30,7 +30,7 @@ import org.apache.spark.sql.connector.kinesis.KinesisOptions.EFO_CONSUMER_TYPE
 import org.apache.spark.sql.connector.kinesis.KinesisOptions.HDFS_COMMITTER_TYPE
 import org.apache.spark.sql.connector.kinesis.KinesisV2TableProvider.AWS_KINESIS_SHORT_NAME
 import org.apache.spark.sql.connector.kinesis.TrimHorizon
-import org.apache.spark.sql.execution.streaming.MemoryStream
+import org.apache.spark.sql.execution.streaming.runtime.MemoryStream
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.sql.streaming.StreamingQuery
