@@ -24,7 +24,7 @@ import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 
 import org.apache.spark.sql.connector.read.streaming.Offset
-import org.apache.spark.sql.execution.streaming.SerializedOffset
+import org.apache.spark.sql.execution.streaming.runtime.SerializedOffset
 
 case class KinesisV2SourceOffset(shardsToOffsets: ShardOffsets) extends Offset {
   override def json: String = {
