@@ -31,6 +31,7 @@ import software.amazon.awssdk.auth.credentials.AwsSessionCredentials
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.http.apache.ApacheHttpClient
+import software.amazon.awssdk.profiles.ProfileFileSupplier
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.sts.StsClient
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider
@@ -76,6 +77,7 @@ case class BasicAwsSessionCredentials(
 case class RetryableDefaultCredentialsProvider() extends AwsCredentialsProvider with Closeable with Logging {
   private val provider = DefaultCredentialsProvider.builder()
     .asyncCredentialUpdateEnabled(true)
+    .profileFile(ProfileFileSupplier.defaultSupplier())
     .build()
   
   private val MAX_ATTEMPT = 15
