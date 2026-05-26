@@ -28,6 +28,7 @@ import org.apache.spark.sql.connector.kinesis.retrieval.SequenceNumber.SENTINEL_
 trait RecordBatchPublisher {
   def runProcessLoop(recordBatchConsumer: RecordBatchConsumer): RecordsPublisherRunStatus
   def initialStartingPosition: KinesisPosition
+  def currentStartingPosition: KinesisPosition
   def streamShard: StreamShard
 
   protected def getNextStartingPosition(latestSequenceNumber: SequenceNumber,

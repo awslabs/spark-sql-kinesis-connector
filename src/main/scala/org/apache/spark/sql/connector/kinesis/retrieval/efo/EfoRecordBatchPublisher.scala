@@ -23,6 +23,7 @@ import software.amazon.awssdk.services.kinesis.model.SubscribeToShardEvent
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.connector.kinesis.FullJitterBackoffManager
 import org.apache.spark.sql.connector.kinesis.KinesisOptions
+import org.apache.spark.sql.connector.kinesis.AfterSequenceNumber
 import org.apache.spark.sql.connector.kinesis.KinesisPosition
 import org.apache.spark.sql.connector.kinesis.client.KinesisClientConsumer
 import org.apache.spark.sql.connector.kinesis.retrieval.RecordBatch
@@ -47,6 +48,8 @@ class EfoRecordBatchPublisher (
   val backoffManager: FullJitterBackoffManager = backoff.getOrElse(new FullJitterBackoffManager())
   var nextStartingPosition: KinesisPosition = initialStartingPosition
 
+  override def currentStartingPosition: KinesisPosition = nextStartingPosition
+
   /** The current attempt in the case of subsequent recoverable errors. */
   private var attempt = 0
 
@@ -56,7 +59,11 @@ class EfoRecordBatchPublisher (
       override def accept(event: SubscribeToShardEvent): Unit = {
         val recordBatch = RecordBatch (event.records.asScala.toSeq, streamShard, event.millisBehindLatest)
         val sequenceNumber = recordBatchConsumer.accept (recordBatch)
-        nextStartingPosition = getNextStartingPosition (sequenceNumber, nextStartingPosition)
+        if (event.records.isEmpty && event.millisBehindLatest > 0 && event.continuationSequenceNumber != null) {
+          nextStartingPosition = new AfterSequenceNumber(event.continuationSequenceNumber, -1, true)
+        } else {
+          nextStartingPosition = getNextStartingPosition(sequenceNumber, nextStartingPosition)
+        }
       }}
 
     val result = runWithBackoff(eventConsumer)
