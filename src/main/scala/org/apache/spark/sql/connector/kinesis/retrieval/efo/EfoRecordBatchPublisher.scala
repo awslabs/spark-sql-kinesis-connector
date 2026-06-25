@@ -59,6 +59,9 @@ class EfoRecordBatchPublisher (
       override def accept(event: SubscribeToShardEvent): Unit = {
         val recordBatch = RecordBatch (event.records.asScala.toSeq, streamShard, event.millisBehindLatest)
         val sequenceNumber = recordBatchConsumer.accept (recordBatch)
+        // When EFO returns empty records but millisBehindLatest > 0, our position is behind
+        // the stream tip. Use the continuationSequenceNumber to advance past the current
+        // position and avoid getting stuck in an infinite loop at AT_TIMESTAMP.
         if (event.records.isEmpty && event.millisBehindLatest > 0 && event.continuationSequenceNumber != null) {
           nextStartingPosition = new AfterSequenceNumber(event.continuationSequenceNumber, -1, true)
         } else {
