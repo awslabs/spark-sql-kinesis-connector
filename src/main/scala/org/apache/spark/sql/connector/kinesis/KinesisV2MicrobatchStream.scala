@@ -131,8 +131,9 @@ class KinesisV2MicrobatchStream (
       millisBehindLatest = millisBehindLatestCatchUp
       nextShardIterator = nextShardIteratorCatchUp
     }
-    // Return true if we can get back a record. Or if we have not reached the end of the stream
-    val result = (recordsSize > 0 || millisBehindLatest > 0)
+    // Return true if we can get back a record. Or if we have not reached the end of the stream.
+    val result = (recordsSize > 0 || millisBehindLatest > 0
+      || shardInfo.iteratorType == org.apache.spark.sql.connector.kinesis.AtTimeStamp.iteratorType)
     logInfo(s"hasNewData result ${result} for shardId ${shardInfo.shardId}")
     result
   }

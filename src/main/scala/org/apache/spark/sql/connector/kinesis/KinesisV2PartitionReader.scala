@@ -346,6 +346,14 @@ class KinesisV2PartitionReader (schema: StructType,
               lastReadSequenceNumber.subSequenceNumber,
               lastReadSequenceNumber.isLast))
       }
+      else if (recordBatchPublisher.currentStartingPosition != recordBatchPublisher.initialStartingPosition) {
+        logInfo(s"No user records but publisher advanced for ${sourcePartition.startShardInfo}")
+        new ShardInfo(sourcePartition.startShardInfo.shardId, recordBatchPublisher.currentStartingPosition)
+      }
+      else if (sourcePartition.startShardInfo.iteratorType == AtTimeStamp.iteratorType) {
+        logInfo(s"Converting stuck AT_TIMESTAMP to LATEST for ${sourcePartition.startShardInfo}")
+        new ShardInfo(sourcePartition.startShardInfo.shardId, new Latest())
+      }
       else {
         logInfo(s"No Records were processed in this batch for ${sourcePartition.startShardInfo}")
         sourcePartition.startShardInfo

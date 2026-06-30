@@ -50,6 +50,8 @@ class PollingRecordBatchPublisher(
   // visible for test only
   var nextStartingPosition: KinesisPosition = initialStartingPosition
 
+  override def currentStartingPosition: KinesisPosition = nextStartingPosition
+
   private var nextShardItr: String = getShardIterator()
   private var processingStartTimeNanos = System.nanoTime
 
