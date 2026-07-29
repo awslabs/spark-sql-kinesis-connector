@@ -27,7 +27,8 @@ object KinesisClientFactory {
       StructField("streamName", StringType),
       StructField("partitionKey", StringType),
       StructField("sequenceNumber", StringType),
-      StructField("approximateArrivalTimestamp", TimestampType))
+      StructField("approximateArrivalTimestamp", TimestampType),
+      StructField("shardId", StringType))
     )
 
   def createConsumer(options: KinesisOptions, streamName: String, endpointUrl: String): KinesisClientConsumer = {
