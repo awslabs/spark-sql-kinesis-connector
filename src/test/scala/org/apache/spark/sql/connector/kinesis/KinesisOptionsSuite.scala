@@ -39,6 +39,7 @@ class KinesisOptionsSuite extends KinesisTestBase {
     options.avoidEmptyBatches shouldBe DEFAULT_AVOID_EMPTY_BATCHES
     options.maxFetchRecordsPerShard shouldBe DEFAULT_MAX_FETCH_RECORDS_PER_SHARD
     options.maxFetchTimePerShardSec shouldBe None
+    options.stopReadWhenMillisBehindLatestIsZero shouldBe DEFAULT_STOP_READ_WHEN_MILLIS_BEHIND_LATEST_IS_ZERO
     options.startingPosition shouldBe DEFAULT_STARTING_POSITION
     options.describeShardIntervalMs shouldBe Utils.timeStringAsMs(DEFAULT_DESCRIBE_SHARD_INTERVAL)
     options.minBatchesToRetain shouldBe None
@@ -83,6 +84,7 @@ class KinesisOptionsSuite extends KinesisTestBase {
     options.avoidEmptyBatches shouldBe DEFAULT_AVOID_EMPTY_BATCHES
     options.maxFetchRecordsPerShard shouldBe DEFAULT_MAX_FETCH_RECORDS_PER_SHARD
     options.maxFetchTimePerShardSec shouldBe None
+    options.stopReadWhenMillisBehindLatestIsZero shouldBe DEFAULT_STOP_READ_WHEN_MILLIS_BEHIND_LATEST_IS_ZERO
     options.startingPosition shouldBe DEFAULT_STARTING_POSITION
     options.describeShardIntervalMs shouldBe Utils.timeStringAsMs(DEFAULT_DESCRIBE_SHARD_INTERVAL)
     options.minBatchesToRetain shouldBe None
@@ -242,6 +244,25 @@ class KinesisOptionsSuite extends KinesisTestBase {
     val options2 = KinesisOptions(new CaseInsensitiveStringMap(params2.asJava))
 
     options2.maxFetchTimePerShardSec shouldBe Some(10)
+  }
+
+  test("STOP_READ_WHEN_MILLIS_BEHIND_LATEST_IS_ZERO is false by default and parses true") {
+    val options = KinesisOptions(new CaseInsensitiveStringMap(defaultPollingOptionMap.asJava))
+    options.stopReadWhenMillisBehindLatestIsZero shouldBe false
+
+    val params = collection.mutable.Map(defaultPollingOptionMap.toSeq: _*) +
+      (STOP_READ_WHEN_MILLIS_BEHIND_LATEST_IS_ZERO -> "true")
+    val options2 = KinesisOptions(new CaseInsensitiveStringMap(params.asJava))
+    options2.stopReadWhenMillisBehindLatestIsZero shouldBe true
+  }
+
+  test("STOP_READ_WHEN_MILLIS_BEHIND_LATEST_IS_ZERO must be true or false") {
+    val params = collection.mutable.Map(defaultPollingOptionMap.toSeq: _*) +
+      (STOP_READ_WHEN_MILLIS_BEHIND_LATEST_IS_ZERO -> "yes")
+
+    intercept[IllegalArgumentException] {
+      KinesisOptions(new CaseInsensitiveStringMap(params.asJava))
+    }
   }
 
   test("get region from endpoint url") {

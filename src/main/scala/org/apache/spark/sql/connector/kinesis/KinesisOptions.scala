@@ -71,6 +71,7 @@ case class KinesisOptions (
                             waitTableActiveTimeoutSeconds: Int = 600,
                             waitTableActiveSecondsBetweenPolls: Int = 10,
                             httpClientReadTimeout: Duration = Duration.ofMinutes(3),
+                            stopReadWhenMillisBehindLatestIsZero: Boolean = false,
 )
 object KinesisOptions {
   private val PREFIX = "kinesis."
@@ -95,6 +96,7 @@ object KinesisOptions {
 
   val MAX_FETCH_RECORDS_PER_SHARD: String = PREFIX + "maxFetchRecordsPerShard"
   val MAX_FETCH_TIME_PER_SHARD_SEC: String = PREFIX + "maxFetchTimePerShardSec"
+  val STOP_READ_WHEN_MILLIS_BEHIND_LATEST_IS_ZERO: String = PREFIX + "stopReadWhenMillisBehindLatestIsZero"
   val STARTING_POSITION: String = PREFIX + "startingPosition"
   val DESCRIBE_SHARD_INTERVAL: String = PREFIX + "describeShardInterval"
   val MIN_BATCHES_TO_RETAIN: String = PREFIX + "minBatchesToRetain"
@@ -146,6 +148,7 @@ object KinesisOptions {
   val DEFAULT_STARTING_POSITION: String = Latest.iteratorType
   val DEFAULT_FAIL_ON_DATA_LOSS: Boolean = false
   val DEFAULT_AVOID_EMPTY_BATCHES: Boolean = true
+  val DEFAULT_STOP_READ_WHEN_MILLIS_BEHIND_LATEST_IS_ZERO: Boolean = false
   val DEFAULT_CHECK_NEW_RECORD_THREADS: Int = 8
 
   val DEFAULT_METADATA_NUMBER_RETRIES: Int = 5
@@ -230,6 +233,10 @@ object KinesisOptions {
         throw new IllegalArgumentException(s"${MAX_FETCH_TIME_PER_SHARD_SEC} must be no less than 10")
       }
     }
+
+    val stopReadWhenMillisBehindLatestIsZero: Boolean = parameterGetBooleanOrElse(parameters,
+      STOP_READ_WHEN_MILLIS_BEHIND_LATEST_IS_ZERO,
+      DEFAULT_STOP_READ_WHEN_MILLIS_BEHIND_LATEST_IS_ZERO)
 
     val startingPosition: String = parameterGetStringOrElse(parameters,
       STARTING_POSITION,
@@ -379,6 +386,7 @@ object KinesisOptions {
       failOnDataLoss = failOnDataLoss,
       maxFetchRecordsPerShard = maxFetchRecordsPerShard,
       maxFetchTimePerShardSec = maxFetchTimePerShardSec,
+      stopReadWhenMillisBehindLatestIsZero = stopReadWhenMillisBehindLatestIsZero,
       startingPosition = startingPosition,
       describeShardIntervalMs = describeShardIntervalMs,
       avoidEmptyBatches = avoidEmptyBatches,

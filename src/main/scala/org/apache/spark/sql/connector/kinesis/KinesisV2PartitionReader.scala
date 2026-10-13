@@ -99,6 +99,11 @@ class KinesisV2PartitionReader (schema: StructType,
   private val dataQueueWaitTimeout = kinesisOptions.dataQueueWaitTimeout
   private val maxDataQueueEmptyCount = kinesisOptions.maxDataQueueEmptyCount
 
+  // Stop as soon as the shard is caught up. Never applied when the batch has an explicit
+  // stop position, so a replayed batch reads the same records it read the first time.
+  private val stopReadWhenCaughtUp = kinesisOptions.stopReadWhenMillisBehindLatestIsZero &&
+    sourcePartition.stopShardInfo.isEmpty
+
   private val dataQueue: BlockingQueue[KinesisUserRecord] = new ArrayBlockingQueue[KinesisUserRecord](queueCapacity);
 
   val recordBatchPublisher: RecordBatchPublisher = RecordBatchPublisherFactory.create(
@@ -112,7 +117,7 @@ class KinesisV2PartitionReader (schema: StructType,
 
   val shardConsumersExecutor: ExecutorService = createShardConsumersThreadPool("KinesisV2PartitionReader")
 
-  val shardConsumer = new ShardConsumer(this, recordBatchPublisher)
+  val shardConsumer = new ShardConsumer(this, recordBatchPublisher, signalCaughtUp = stopReadWhenCaughtUp)
 
   shardConsumersExecutor.submit(shardConsumer)
 
@@ -220,6 +225,11 @@ class KinesisV2PartitionReader (schema: StructType,
             // after the empty ones, reset the counter
             lastEmptyCnt = 0
             emptyCnt = 0
+          } else if (KinesisV2PartitionReader.shouldStopWhenCaughtUp(stopReadWhenCaughtUp,
+            userRecord.millisBehindLatest, isLastSubSequence = true, dataQueue.size())) {
+            logInfo(s"Shard ${kinesisShardId} is caught up (millisBehindLatest 0, no queued records)." +
+              " Stop fetchNext.")
+            fetchNext = false
           }
 
         } else {
@@ -238,6 +248,12 @@ class KinesisV2PartitionReader (schema: StructType,
               logInfo(s"stopShardInfo reached for shard ${kinesisShardId}" +
                 s" with userRecord ${userRecord.sequenceNumber}," +
                 s" inputPartition stopShardInfo ${sourcePartition.stopShardInfo}")
+              fetchNext = false
+            }
+            else if (KinesisV2PartitionReader.shouldStopWhenCaughtUp(stopReadWhenCaughtUp,
+              userRecord.millisBehindLatest.longValue(), userRecord.isLastSubSequence, dataQueue.size())) {
+              logInfo(s"Shard ${kinesisShardId} is caught up at ${userRecord.sequenceNumber}." +
+                " Stop fetchNext.")
               fetchNext = false
             }
             else if (userRecord.millisBehindLatest.longValue() == 0
@@ -372,5 +388,21 @@ class KinesisV2PartitionReader (schema: StructType,
     } else {
       logWarning("skip updateMetadata as stopped with error")
     }
+  }
+}
+
+object KinesisV2PartitionReader {
+
+  /**
+   * Whether a reader with kinesis.stopReadWhenMillisBehindLatestIsZero should stop the shard now:
+   * the record just read reports millisBehindLatest == 0, it is the last sub-record of its Kinesis
+   * record, and nothing else is waiting in the data queue. Records that arrive at the tip after
+   * this point are read by the next micro-batch.
+   */
+  private[kinesis] def shouldStopWhenCaughtUp(enabled: Boolean,
+                                              millisBehindLatest: Long,
+                                              isLastSubSequence: Boolean,
+                                              queuedRecords: Int): Boolean = {
+    enabled && millisBehindLatest == 0 && isLastSubSequence && queuedRecords == 0
   }
 }
