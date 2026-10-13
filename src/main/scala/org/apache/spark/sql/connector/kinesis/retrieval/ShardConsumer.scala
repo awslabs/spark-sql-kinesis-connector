@@ -34,9 +34,16 @@ object ShardConsumer {
   class ShardConsumerInterruptedException(message: String) extends ShardConsumer.ShardConsumerException(message) {}
 }
 
+/**
+ * @param signalCaughtUp when true, an empty batch with millisBehindLatest == 0 enqueues an
+ *                       empty user record carrying millisBehindLatest = 0, so the reader learns
+ *                       the shard is caught up without waiting for its empty polls to run out.
+ *                       Used by kinesis.stopReadWhenMillisBehindLatestIsZero.
+ */
 class ShardConsumer(
       val dataReader: DataReceiver,
-      val recordBatchPublisher: RecordBatchPublisher) extends Runnable with Logging{
+      val recordBatchPublisher: RecordBatchPublisher,
+      val signalCaughtUp: Boolean = false) extends Runnable with Logging{
 
   private var lastSequenceNum: SequenceNumber = SequenceNumber.toSequenceNumber(recordBatchPublisher.initialStartingPosition)
   val streamShard = recordBatchPublisher.streamShard
@@ -66,6 +73,9 @@ class ShardConsumer(
               if (batch.millisBehindLatest > 0) {
                 // to avoid upper layer timeout
                 enqueueRecord(KinesisUserRecord.createEmptyUserRecord(batch.millisBehindLatest))
+              } else if (signalCaughtUp) {
+                // the shard is caught up: tell the reader so it can stop without further empty polls
+                enqueueRecord(KinesisUserRecord.createEmptyUserRecord(0))
               }
             }
             
